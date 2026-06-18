@@ -1,20 +1,52 @@
 import { useState, useEffect } from "react";
+import { db } from "./firebase";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
 
 function App() {
+  const [firebaseData, setFirebaseData] = useState({});
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [checkedItems, setCheckedItems] = useState(() => {
-    const savedData = localStorage.getItem("checkedItems");
-
-    return savedData ? JSON.parse(savedData) : {};
-  });
+  const [globalNotice, setGlobalNotice] = useState("");
+  const [buildingNotice, setBuildingNotice] = useState("");
 
 
   useEffect(() => {
-    localStorage.setItem(
-      "checkedItems",
-      JSON.stringify(checkedItems)
+    const unsubscribe = onSnapshot(
+      doc(db, "notice", "all"),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setGlobalNotice(docSnap.data().message);
+        }
+      }
     );
-  }, [checkedItems]);
+
+    return () => unsubscribe();
+  }, []);
+  useEffect(() => {
+    const unsubscribes = [];
+
+    for (let i = 401; i <= 409; i++) {
+      const docRef = doc(db, "buildings", String(i));
+
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setFirebaseData((prev) => ({
+            ...prev,
+            [`${i}동`]: docSnap.data(),
+          }));
+        }
+      });
+
+      unsubscribes.push(unsubscribe);
+    }
+
+    return () => {
+      unsubscribes.forEach((fn) => fn());
+    };
+  }, []);
   const buildings = [
     "401동",
     "402동",
@@ -27,48 +59,34 @@ function App() {
     "409동",
   ];
 
-  const deliveryData = {
-    "401동": {
-      lunch: 18,
-      soup: 18,
-      lohas: 2,
-      list: [
-        { id: 1, room: "101호", memo: "초인종 고장" },
-        { id: 2, room: "102호", memo: "없음" },
-        { id: 3, room: "203호", memo: "로하스밀" },
-      ],
-    },
 
-    "402동": {
-      lunch: 12,
-      soup: 12,
-      lohas: 1,
-      list: [
-        { id: 1, room: "201호", memo: "" },
-        { id: 2, room: "202호", memo: "문 앞 배달" },
-      ],
-    },
 
-    "409동": {
-      lunch: 10,
-      soup: 10,
-      lohas: 10,
-      list: [
-        { id: 1, room: "109호", memo: "" },
-        { id: 2, room: "203호", memo: "" },
-        { id: 3, room: "302호", memo: "" },
-        { id: 4, room: "407호", memo: "" },
-        { id: 5, room: "705호", memo: "" },
-        { id: 6, room: "707호", memo: "" },
-        { id: 7, room: "708호", memo: "" },
-        { id: 8, room: "710호", memo: "" },
-        { id: 9, room: "807호", memo: "" },
-        { id: 10, room: "1005호", memo: "" },
-      ],
-    },
+  const currentData = {
+    lunch: firebaseData[selectedBuilding]?.lunch || 0,
+    soup: firebaseData[selectedBuilding]?.soup || 0,
+    lohas: firebaseData[selectedBuilding]?.lohas || 0,
+    list: firebaseData[selectedBuilding]?.rooms || [],
   };
 
-  const currentData = deliveryData[selectedBuilding];
+  async function toggleCheck(item) {
+    const buildingNumber =
+      selectedBuilding.replace("동", "");
+
+    const rooms =
+      currentData.list.map((room) =>
+        room.id === item.id
+          ? {
+            ...room,
+            checked: !room.checked,
+          }
+          : room
+      );
+
+    await updateDoc(
+      doc(db, "buildings", buildingNumber),
+      { rooms }
+    );
+  }
 
   if (selectedBuilding) {
     return (
@@ -103,7 +121,11 @@ function App() {
           <div>🌱 로하스밀 : {currentData.lohas}개</div>
           <div>
             진행률 :
-            {(checkedItems[selectedBuilding] || []).length}
+            {
+              currentData.list.filter(
+                (room) => room.checked
+              ).length
+            }
             /
             {currentData.list.length}
           </div>
@@ -119,12 +141,12 @@ function App() {
               marginBottom: "10px",
 
               backgroundColor:
-                (checkedItems[selectedBuilding] || []).includes(item.id)
+                item.checked
                   ? "#444"
                   : "transparent",
 
               opacity:
-                (checkedItems[selectedBuilding] || []).includes(item.id)
+                item.checked
                   ? 0.6
                   : 1,
             }}
@@ -138,30 +160,8 @@ function App() {
             >
               <input
                 type="checkbox"
-                checked={
-                  (checkedItems[selectedBuilding] || []).includes(item.id)
-                }
-                onChange={() => {
-                  const currentChecked =
-                    checkedItems[selectedBuilding] || [];
-
-                  if (currentChecked.includes(item.id)) {
-                    setCheckedItems({
-                      ...checkedItems,
-                      [selectedBuilding]: currentChecked.filter(
-                        (id) => id !== item.id
-                      ),
-                    });
-                  } else {
-                    setCheckedItems({
-                      ...checkedItems,
-                      [selectedBuilding]: [
-                        ...currentChecked,
-                        item.id,
-                      ],
-                    });
-                  }
-                }}
+                checked={item.checked}
+                onChange={() => toggleCheck(item)}
               />
 
               <h3
@@ -203,6 +203,17 @@ function App() {
       >
         🍱 도시락 배달 봉사
       </h1>
+
+      <div
+        style={{
+          border: "1px solid orange",
+          borderRadius: "10px",
+          padding: "10px",
+          marginBottom: "20px",
+        }}
+      >
+        📢 공지 : {globalNotice}
+      </div>
 
       {buildings.map((building) => (
         <button
