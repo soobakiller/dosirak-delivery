@@ -8,7 +8,7 @@ import Admin from "./Admin.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter basename="/dosirak-delivery">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/admin" element={<Admin />} />
