@@ -59,13 +59,14 @@ function App() {
     "409동",
   ];
 
-
+  console.log(firebaseData[selectedBuilding]);
 
   const currentData = {
     lunch: firebaseData[selectedBuilding]?.lunch || 0,
     soup: firebaseData[selectedBuilding]?.soup || 0,
     lohas: firebaseData[selectedBuilding]?.lohas || 0,
     list: firebaseData[selectedBuilding]?.rooms || [],
+    notice: firebaseData[selectedBuilding]?.notice || "",
   };
 
   async function toggleCheck(item) {
@@ -107,6 +108,16 @@ function App() {
         </button>
 
         <h1>{selectedBuilding}</h1>
+        <div
+          style={{
+            border: "1px solid #666",
+            borderRadius: "10px",
+            padding: "10px",
+            marginBottom: "20px",
+          }}
+        >
+          📢 동별 공지 : {currentData.notice}
+        </div>
 
         <div
           style={{
