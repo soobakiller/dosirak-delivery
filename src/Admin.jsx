@@ -321,6 +321,10 @@ function Admin() {
                                     {building.checked}
                                     /
                                     {building.total}
+
+                                    {building.total > 0 &&
+                                        building.checked === building.total &&
+                                        " ✅"}
                                 </span>
                             </div>
                         ))}
