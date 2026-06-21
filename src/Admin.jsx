@@ -313,9 +313,22 @@ function Admin() {
                                     display: "flex",
                                     justifyContent: "space-between",
                                     marginBottom: "5px",
+                                    padding: "4px",
+                                    borderRadius: "5px",
                                 }}
                             >
-                                <span>{building.id}동</span>
+                                <span
+                                    style={{
+                                        cursor: "pointer",
+                                        fontWeight: "bold",
+                                    }}
+                                    onClick={() => {
+                                        setSelectedBuilding(building.id);
+                                        setTab("building");
+                                    }}
+                                >
+                                    {building.id}동
+                                </span>
 
                                 <span>
                                     {building.checked}
