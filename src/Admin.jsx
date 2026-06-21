@@ -112,13 +112,25 @@ function Admin() {
     );
 
     async function saveBuilding() {
+
+        const sortedRooms = [...editData.rooms].sort(
+            (a, b) =>
+                parseInt(a.room) - parseInt(b.room)
+        );
+
         await setDoc(
             doc(db, "buildings", selectedBuilding),
             {
                 ...editData,
+                rooms: sortedRooms,
                 notice: buildingNotice,
             }
         );
+
+        setEditData({
+            ...editData,
+            rooms: sortedRooms,
+        });
 
         alert("동 정보 저장 완료!");
     }
