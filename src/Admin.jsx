@@ -12,6 +12,7 @@ function Admin() {
     const [newRoom, setNewRoom] = useState("");
     const [password, setPassword] = useState("");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [tab, setTab] = useState("dashboard");
 
 
 
@@ -178,213 +179,253 @@ function Admin() {
             }}
         >
             <h1>⚙ 관리자 페이지</h1>
-            <h2>동 선택</h2>
-
-            <select
-                value={selectedBuilding}
-                onChange={(e) => setSelectedBuilding(e.target.value)}
+            <div
                 style={{
-                    width: "100%",
-                    height: "40px",
+                    display: "flex",
+                    gap: "10px",
                     marginBottom: "20px",
                 }}
             >
-                <option value="401">401동</option>
-                <option value="402">402동</option>
-                <option value="403">403동</option>
-                <option value="404">404동</option>
-                <option value="405">405동</option>
-                <option value="406">406동</option>
-                <option value="407">407동</option>
-                <option value="408">408동</option>
-                <option value="409">409동</option>
-            </select>
-            <h2>전체 공지</h2>
-
-            <textarea
-                value={notice}
-                onChange={(e) => setNotice(e.target.value)}
-                style={{
-                    width: "100%",
-                    height: "100px",
-                }}
-            />
-
-            <button
-                onClick={saveNotice}
-                style={{
-                    marginTop: "10px",
-                }}
-            >
-                공지 저장
-            </button>
-            <hr style={{ marginTop: "30px", marginBottom: "30px" }} />
-
-            <h2>현재 선택 동</h2>
-
-            <div
-                style={{
-                    padding: "10px",
-                    border: "1px solid gray",
-                    borderRadius: "10px",
-                }}
-            >
-                {selectedBuilding}동
-            </div>
-            {buildingData && (
-                <div
-                    style={{
-                        marginTop: "20px",
-                        border: "1px solid gray",
-                        borderRadius: "10px",
-                        padding: "10px",
-                    }}
+                <button
+                    onClick={() => setTab("dashboard")}
                 >
-                    <h3>동별 공지</h3>
+                    📊 전체 현황
+                </button>
 
-                    <textarea
-                        value={buildingNotice}
-                        onChange={(e) =>
-                            setBuildingNotice(e.target.value)
-                        }
+                <button
+                    onClick={() => setTab("building")}
+                >
+                    🏢 동별 관리
+                </button>
+            </div>
+            {tab === "dashboard" && (
+                <div>
+                    <h2>전체 현황</h2>
+
+                    <div
+                        style={{
+                            padding: "10px",
+                            border: "1px solid gray",
+                            borderRadius: "10px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        대시보드 준비중
+                    </div>
+                </div>
+            )}
+            {tab === "building" && (
+                <div>
+                    <h2>동 선택</h2>
+
+                    <select
+                        value={selectedBuilding}
+                        onChange={(e) => setSelectedBuilding(e.target.value)}
                         style={{
                             width: "100%",
-                            height: "80px",
-                            marginBottom: "10px",
+                            height: "40px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        <option value="401">401동</option>
+                        <option value="402">402동</option>
+                        <option value="403">403동</option>
+                        <option value="404">404동</option>
+                        <option value="405">405동</option>
+                        <option value="406">406동</option>
+                        <option value="407">407동</option>
+                        <option value="408">408동</option>
+                        <option value="409">409동</option>
+                    </select>
+                    <h2>전체 공지</h2>
+
+                    <textarea
+                        value={notice}
+                        onChange={(e) => setNotice(e.target.value)}
+                        style={{
+                            width: "100%",
+                            height: "100px",
                         }}
                     />
 
-                    <div>
-                        🍱 도시락 :
-                        <input
-                            type="number"
-                            value={editData?.lunch || 0}
-                            onChange={(e) =>
-                                setEditData({
-                                    ...editData,
-                                    lunch: Number(e.target.value),
-                                })
-                            }
-                            style={{ width: "80px", marginLeft: "10px" }}
-                        />
-                    </div>
-                    <div>
-                        🥣 국 :
-                        <input
-                            type="number"
-                            value={editData?.soup || 0}
-                            onChange={(e) =>
-                                setEditData({
-                                    ...editData,
-                                    soup: Number(e.target.value),
-                                })
-                            }
-                            style={{ width: "80px", marginLeft: "10px" }}
-                        />
-                    </div>
-                    <div>
-                        🌱 로하스밀 :
-                        <input
-                            type="number"
-                            value={editData?.lohas || 0}
-                            onChange={(e) =>
-                                setEditData({
-                                    ...editData,
-                                    lohas: Number(e.target.value),
-                                })
-                            }
-                            style={{ width: "80px", marginLeft: "10px" }}
-                        />
-                    </div>
-                    <div>🏠 호수 수 : {editData?.rooms.length}</div>
-                    <div style={{ marginTop: "15px" }}>
-                        {editData?.rooms.map((room) => (
-                            <div
-                                key={room.id}
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    marginBottom: "5px",
-                                }}
-                            >
-                                <div>
-                                    <div>🏠 {room.room}</div>
-
-                                    <input
-                                        type="text"
-                                        value={room.memo}
-                                        placeholder="메모 입력"
-                                        onChange={(e) =>
-                                            setEditData({
-                                                ...editData,
-                                                rooms: editData.rooms.map((r) =>
-                                                    r.id === room.id
-                                                        ? {
-                                                            ...r,
-                                                            memo: e.target.value,
-                                                        }
-                                                        : r
-                                                ),
-                                            })
-                                        }
-                                        style={{
-                                            width: "150px",
-                                            marginTop: "3px",
-                                        }}
-                                    />
-                                </div>
-
-                                <button
-                                    onClick={() => deleteRoom(room.id)}
-                                >
-                                    삭제
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                    <div style={{ marginTop: "15px" }}>
-                        <input
-                            type="text"
-                            value={newRoom}
-                            placeholder="예: 1501호"
-                            onChange={(e) => setNewRoom(e.target.value)}
-                            style={{
-                                width: "150px",
-                            }}
-                        />
-
-                        <button
-                            onClick={addRoom}
-                            style={{
-                                marginLeft: "10px",
-                            }}
-                        >
-                            호수 추가
-                        </button>
-                    </div>
                     <button
-                        onClick={saveBuilding}
-                        style={{
-                            marginTop: "15px",
-                            width: "100%",
-                            height: "40px",
-                        }}
-                    >
-                        동 정보 저장
-                    </button>
-
-                    <button
-                        onClick={resetChecks}
+                        onClick={saveNotice}
                         style={{
                             marginTop: "10px",
-                            width: "100%",
-                            height: "40px",
-                            backgroundColor: "#aa3333",
                         }}
                     >
-                        체크 초기화
+                        공지 저장
                     </button>
+                    <hr style={{ marginTop: "30px", marginBottom: "30px" }} />
+
+                    <h2>현재 선택 동</h2>
+
+                    <div
+                        style={{
+                            padding: "10px",
+                            border: "1px solid gray",
+                            borderRadius: "10px",
+                        }}
+                    >
+                        {selectedBuilding}동
+                    </div>
+                    {buildingData && (
+                        <div
+                            style={{
+                                marginTop: "20px",
+                                border: "1px solid gray",
+                                borderRadius: "10px",
+                                padding: "10px",
+                            }}
+                        >
+                            <h3>동별 공지</h3>
+
+                            <textarea
+                                value={buildingNotice}
+                                onChange={(e) =>
+                                    setBuildingNotice(e.target.value)
+                                }
+                                style={{
+                                    width: "100%",
+                                    height: "80px",
+                                    marginBottom: "10px",
+                                }}
+                            />
+
+                            <div>
+                                🍱 도시락 :
+                                <input
+                                    type="number"
+                                    value={editData?.lunch || 0}
+                                    onChange={(e) =>
+                                        setEditData({
+                                            ...editData,
+                                            lunch: Number(e.target.value),
+                                        })
+                                    }
+                                    style={{ width: "80px", marginLeft: "10px" }}
+                                />
+                            </div>
+                            <div>
+                                🥣 국 :
+                                <input
+                                    type="number"
+                                    value={editData?.soup || 0}
+                                    onChange={(e) =>
+                                        setEditData({
+                                            ...editData,
+                                            soup: Number(e.target.value),
+                                        })
+                                    }
+                                    style={{ width: "80px", marginLeft: "10px" }}
+                                />
+                            </div>
+                            <div>
+                                🌱 로하스밀 :
+                                <input
+                                    type="number"
+                                    value={editData?.lohas || 0}
+                                    onChange={(e) =>
+                                        setEditData({
+                                            ...editData,
+                                            lohas: Number(e.target.value),
+                                        })
+                                    }
+                                    style={{ width: "80px", marginLeft: "10px" }}
+                                />
+                            </div>
+                            <div>🏠 호수 수 : {editData?.rooms.length}</div>
+                            <div style={{ marginTop: "15px" }}>
+                                {editData?.rooms.map((room) => (
+                                    <div
+                                        key={room.id}
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            marginBottom: "5px",
+                                        }}
+                                    >
+                                        <div>
+                                            <div>🏠 {room.room}</div>
+
+                                            <input
+                                                type="text"
+                                                value={room.memo}
+                                                placeholder="메모 입력"
+                                                onChange={(e) =>
+                                                    setEditData({
+                                                        ...editData,
+                                                        rooms: editData.rooms.map((r) =>
+                                                            r.id === room.id
+                                                                ? {
+                                                                    ...r,
+                                                                    memo: e.target.value,
+                                                                }
+                                                                : r
+                                                        ),
+                                                    })
+                                                }
+                                                style={{
+                                                    width: "150px",
+                                                    marginTop: "3px",
+                                                }}
+                                            />
+                                        </div>
+
+                                        <button
+                                            onClick={() => deleteRoom(room.id)}
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ marginTop: "15px" }}>
+                                <input
+                                    type="text"
+                                    value={newRoom}
+                                    placeholder="예: 1501호"
+                                    onChange={(e) => setNewRoom(e.target.value)}
+                                    style={{
+                                        width: "150px",
+                                    }}
+                                />
+
+                                <button
+                                    onClick={addRoom}
+                                    style={{
+                                        marginLeft: "10px",
+                                    }}
+                                >
+                                    호수 추가
+                                </button>
+                            </div>
+                            <button
+                                onClick={saveBuilding}
+                                style={{
+                                    marginTop: "15px",
+                                    width: "100%",
+                                    height: "40px",
+                                }}
+                            >
+                                동 정보 저장
+                            </button>
+
+                            <button
+                                onClick={resetChecks}
+                                style={{
+                                    marginTop: "10px",
+                                    width: "100%",
+                                    height: "40px",
+                                    backgroundColor: "#aa3333",
+                                }}
+                            >
+                                체크 초기화
+                            </button>
+                        </div>
+                    )}
                 </div>
+
             )}
         </div>
     );
