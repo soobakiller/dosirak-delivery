@@ -261,26 +261,7 @@ function Admin() {
                 <div>
                     <h2>전체 현황</h2>
 
-                    <h3>전체 공지</h3>
 
-                    <textarea
-                        value={notice}
-                        onChange={(e) => setNotice(e.target.value)}
-                        style={{
-                            width: "100%",
-                            height: "100px",
-                        }}
-                    />
-
-                    <button
-                        onClick={saveNotice}
-                        style={{
-                            marginTop: "10px",
-                            marginBottom: "20px",
-                        }}
-                    >
-                        공지 저장
-                    </button>
 
                     <div
                         style={{
@@ -306,6 +287,26 @@ function Admin() {
                             }
                         </div>
                     </div>
+                    <h3>전체 공지</h3>
+
+                    <textarea
+                        value={notice}
+                        onChange={(e) => setNotice(e.target.value)}
+                        style={{
+                            width: "100%",
+                            height: "100px",
+                        }}
+                    />
+
+                    <button
+                        onClick={saveNotice}
+                        style={{
+                            marginTop: "10px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        공지 저장
+                    </button>
                 </div>
             )}
             {tab === "building" && (
