@@ -19,6 +19,7 @@ function Admin() {
     const [newRoom, setNewRoom] = useState("");
     const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
     const [adminPassword, setAdminPassword] = useState("1234");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [tab, setTab] = useState("dashboard");
@@ -396,6 +397,19 @@ function Admin() {
                     <hr style={{ marginTop: "20px" }} />
 
                     <h3>비밀번호 변경</h3>
+                    <input
+                        type="password"
+                        placeholder="현재 비밀번호"
+                        value={currentPassword}
+                        onChange={(e) =>
+                            setCurrentPassword(e.target.value)
+                        }
+                        style={{
+                            width: "100%",
+                            height: "40px",
+                            marginBottom: "10px",
+                        }}
+                    />
 
                     <input
                         type="password"
@@ -413,7 +427,10 @@ function Admin() {
 
                     <button
                         onClick={async () => {
-
+                            if (currentPassword !== adminPassword) {
+                                alert("현재 비밀번호가 틀렸습니다.");
+                                return;
+                            }
                             if (!newPassword.trim()) {
                                 alert("비밀번호를 입력하세요.");
                                 return;
@@ -428,6 +445,7 @@ function Admin() {
 
                             setAdminPassword(newPassword);
                             setNewPassword("");
+                            setCurrentPassword("");
 
                             alert("비밀번호 변경 완료!");
                         }}
