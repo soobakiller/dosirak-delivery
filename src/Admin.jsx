@@ -7,6 +7,7 @@ import {
     updateDoc,
     collection,
     getDocs,
+    deleteDoc,
 } from "firebase/firestore";
 
 function Admin() {
@@ -17,6 +18,7 @@ function Admin() {
     const [buildingData, setBuildingData] = useState(null);
     const [editData, setEditData] = useState(null);
     const [newRoom, setNewRoom] = useState("");
+    const [newBuilding, setNewBuilding] = useState("");
     const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
@@ -24,17 +26,9 @@ function Admin() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [tab, setTab] = useState("dashboard");
     const [dashboardData, setDashboardData] = useState([]);
-    const buildings = [
-        "401",
-        "402",
-        "403",
-        "404",
-        "405",
-        "406",
-        "407",
-        "408",
-        "409",
-    ];
+    const [buildings, setBuildings] = useState([]);
+    const [hiddenBuildings, setHiddenBuildings] = useState([]);
+
 
 
 
@@ -77,6 +71,77 @@ function Admin() {
         loadPassword();
     }, []);
     useEffect(() => {
+
+        async function loadBuildings() {
+
+            const docSnap = await getDoc(
+                doc(db, "settings", "buildings")
+            );
+
+            if (docSnap.exists()) {
+
+                setBuildings(
+                    docSnap.data().list || []
+                );
+
+            } else {
+
+                await setDoc(
+                    doc(db, "settings", "buildings"),
+                    {
+                        list: [
+                            "401",
+                            "402",
+                            "403",
+                            "404",
+                            "405",
+                            "406",
+                            "407",
+                            "408",
+                            "409",
+                        ],
+                    }
+                );
+
+                setBuildings([
+                    "401",
+                    "402",
+                    "403",
+                    "404",
+                    "405",
+                    "406",
+                    "407",
+                    "408",
+                    "409",
+                ]);
+            }
+        }
+
+        loadBuildings();
+
+    }, []);
+    useEffect(() => {
+
+        async function loadHiddenBuildings() {
+
+            const docSnap = await getDoc(
+                doc(db, "settings", "buildingHidden")
+            );
+
+            if (docSnap.exists()) {
+
+                setHiddenBuildings(
+                    docSnap.data().hidden || []
+                );
+            }
+        }
+
+        loadHiddenBuildings();
+
+    }, []);
+
+    useEffect(() => {
+
         async function loadDashboard() {
 
             const snapshot =
@@ -224,6 +289,140 @@ function Admin() {
             ),
         });
     }
+    async function addBuilding() {
+
+        if (!newBuilding.trim()) return;
+
+        if (
+            buildings.includes(
+                newBuilding.trim()
+            )
+        ) {
+            alert("이미 존재하는 동입니다.");
+            return;
+        }
+
+        const updatedBuildings = [
+            ...buildings,
+            newBuilding,
+        ].sort();
+
+        await setDoc(
+            doc(db, "settings", "buildings"),
+            {
+                list: updatedBuildings,
+            }
+        );
+        await setDoc(
+            doc(db, "buildings", newBuilding),
+            {
+                lunch: 0,
+                soup: 0,
+                lohas: 0,
+                rooms: [],
+                notice: "",
+            }
+        );
+
+        setBuildings(updatedBuildings);
+
+        setSelectedBuilding(newBuilding);
+
+        setNewBuilding("");
+
+        alert("동 추가 완료!");
+    }
+    async function hideBuilding() {
+
+        if (!selectedBuilding) return;
+
+        if (
+            !window.confirm(
+                `${selectedBuilding}동을 숨길까요?`
+            )
+        ) {
+            return;
+        }
+
+        const updatedHidden = [
+            ...new Set([
+                ...hiddenBuildings,
+                selectedBuilding,
+            ]),
+        ];
+
+        await setDoc(
+            doc(db, "settings", "buildingHidden"),
+            {
+                hidden: updatedHidden,
+            }
+        );
+
+        setHiddenBuildings(updatedHidden);
+
+        alert(`${selectedBuilding}동 숨김 완료`);
+    }
+    async function restoreBuilding(buildingId) {
+
+        const updatedHidden =
+            hiddenBuildings.filter(
+                (id) => id !== buildingId
+            );
+
+        await setDoc(
+            doc(db, "settings", "buildingHidden"),
+            {
+                hidden: updatedHidden,
+            }
+        );
+
+        setHiddenBuildings(updatedHidden);
+
+        alert(`${buildingId} 복구 완료`);
+    }
+    async function deleteBuilding(buildingId) {
+
+        if (
+            !window.confirm(
+                `${buildingId}동을 완전히 삭제할까요?\n복구할 수 없습니다.`
+            )
+        ) {
+            return;
+        }
+
+        await deleteDoc(
+            doc(db, "buildings", buildingId)
+        );
+
+        const updatedBuildings =
+            buildings.filter(
+                (id) => id !== buildingId
+            );
+
+        const updatedHidden =
+            hiddenBuildings.filter(
+                (id) => id !== buildingId
+            );
+
+        await setDoc(
+            doc(db, "settings", "buildings"),
+            {
+                list: updatedBuildings,
+            }
+        );
+
+        await setDoc(
+            doc(db, "settings", "buildingHidden"),
+            {
+                hidden: updatedHidden,
+            }
+        );
+
+        setBuildings(updatedBuildings);
+        setHiddenBuildings(updatedHidden);
+
+        alert(`${buildingId} 삭제 완료`);
+    }
     useEffect(() => {
         async function loadBuilding() {
             const docRef = doc(db, "buildings", selectedBuilding);
@@ -332,6 +531,12 @@ function Admin() {
                 >
                     🏢 동별 관리
                 </button>
+
+                <button
+                    onClick={() => setTab("hidden")}
+                >
+                    👁 숨김 관리
+                </button>
             </div>
             {tab === "dashboard" && (
                 <div>
@@ -369,41 +574,48 @@ function Admin() {
                                 marginBottom: "15px",
                             }}
                         />
-                        {buildingStatus.map((building) => (
-                            <div
-                                key={building.id}
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    marginBottom: "5px",
-                                    padding: "4px",
-                                    borderRadius: "5px",
-                                }}
-                            >
-                                <span
+                        {buildingStatus
+                            .filter(
+                                (building) =>
+                                    !hiddenBuildings.includes(
+                                        building.id
+                                    )
+                            )
+                            .map((building) => (
+                                <div
+                                    key={building.id}
                                     style={{
-                                        cursor: "pointer",
-                                        fontWeight: "bold",
-                                    }}
-                                    onClick={() => {
-                                        setSelectedBuilding(building.id);
-                                        setTab("building");
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginBottom: "5px",
+                                        padding: "4px",
+                                        borderRadius: "5px",
                                     }}
                                 >
-                                    {building.id}동
-                                </span>
+                                    <span
+                                        style={{
+                                            cursor: "pointer",
+                                            fontWeight: "bold",
+                                        }}
+                                        onClick={() => {
+                                            setSelectedBuilding(building.id);
+                                            setTab("building");
+                                        }}
+                                    >
+                                        {building.id}동
+                                    </span>
 
-                                <span>
-                                    {building.checked}
-                                    /
-                                    {building.total}
+                                    <span>
+                                        {building.checked}
+                                        /
+                                        {building.total}
 
-                                    {building.total > 0 &&
-                                        building.checked === building.total &&
-                                        " ✅"}
-                                </span>
-                            </div>
-                        ))}
+                                        {building.total > 0 &&
+                                            building.checked === building.total &&
+                                            " ✅"}
+                                    </span>
+                                </div>
+                            ))}
                     </div>
                     <button
                         onClick={resetAllChecks}
@@ -517,19 +729,58 @@ function Admin() {
                             marginBottom: "20px",
                         }}
                     >
-                        <option value="401">401동</option>
-                        <option value="402">402동</option>
-                        <option value="403">403동</option>
-                        <option value="404">404동</option>
-                        <option value="405">405동</option>
-                        <option value="406">406동</option>
-                        <option value="407">407동</option>
-                        <option value="408">408동</option>
-                        <option value="409">409동</option>
+                        {buildings
+                            .filter(
+                                (building) =>
+                                    !hiddenBuildings.includes(building)
+                            )
+                            .map((building) => (
+                                <option
+                                    key={building}
+                                    value={building}
+                                >
+                                    {building}동
+                                </option>
+                            ))}
                     </select>
 
+                    <div style={{ marginBottom: "20px" }}>
+
+                        <input
+                            type="text"
+                            placeholder="예: 404-1"
+                            value={newBuilding}
+                            onChange={(e) =>
+                                setNewBuilding(e.target.value)
+                            }
+                            style={{
+                                width: "150px",
+                            }}
+                        />
+
+                        <button
+                            onClick={addBuilding}
+                            style={{
+                                marginLeft: "10px",
+                            }}
+                        >
+                            동 추가
+                        </button>
+
+                    </div>
 
                     <h2>현재 선택 동</h2>
+                    <button
+                        onClick={hideBuilding}
+                        style={{
+                            width: "100%",
+                            height: "40px",
+                            marginBottom: "15px",
+                            backgroundColor: "#aa3333",
+                        }}
+                    >
+                        현재 동 숨기기
+                    </button>
 
                     <div
                         style={{
@@ -697,6 +948,62 @@ function Admin() {
                     )}
                 </div>
 
+            )}
+            {tab === "hidden" && (
+                <div>
+
+                    <h2>숨김 관리</h2>
+
+                    {hiddenBuildings.length === 0 && (
+                        <p>숨겨진 동이 없습니다.</p>
+                    )}
+
+                    {hiddenBuildings.map((building) => (
+
+                        <div
+                            key={building}
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: "10px",
+                                padding: "10px",
+                                border: "1px solid gray",
+                                borderRadius: "5px",
+                            }}
+                        >
+                            <span>{building}동</span>
+
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "5px",
+                                }}
+                            >
+                                <button
+                                    onClick={() =>
+                                        restoreBuilding(building)
+                                    }
+                                >
+                                    복구
+                                </button>
+
+                                <button
+                                    onClick={() =>
+                                        deleteBuilding(building)
+                                    }
+                                    style={{
+                                        backgroundColor: "#aa3333",
+                                    }}
+                                >
+                                    삭제
+                                </button>
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                </div>
             )}
         </div>
     );
