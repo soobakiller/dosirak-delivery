@@ -166,6 +166,38 @@ function Admin() {
 
         alert("체크 초기화 완료!");
     }
+    async function resetAllChecks() {
+
+        if (!window.confirm("전체 동의 체크를 초기화할까요?")) {
+            return;
+        }
+
+        for (const buildingId of buildings) {
+
+            const docSnap = await getDoc(
+                doc(db, "buildings", buildingId)
+            );
+
+            if (!docSnap.exists()) continue;
+
+            const data = docSnap.data();
+
+            const rooms = (data.rooms || []).map(
+                (room) => ({
+                    ...room,
+                    checked: false,
+                })
+            );
+
+            await updateDoc(
+                doc(db, "buildings", buildingId),
+                { rooms }
+            );
+        }
+
+        alert("전체 체크 초기화 완료!");
+        window.location.reload();
+    }
     function addRoom() {
         if (!newRoom.trim()) return;
 
@@ -373,6 +405,18 @@ function Admin() {
                             </div>
                         ))}
                     </div>
+                    <button
+                        onClick={resetAllChecks}
+                        style={{
+                            width: "100%",
+                            height: "40px",
+                            marginTop: "10px",
+                            marginBottom: "20px",
+                            backgroundColor: "#aa3333",
+                        }}
+                    >
+                        전체 체크 초기화
+                    </button>
                     <h3>전체 공지</h3>
 
                     <textarea
