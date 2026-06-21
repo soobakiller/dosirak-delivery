@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import {
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    collection,
+    getDocs,
+} from "firebase/firestore";
 
 function Admin() {
 
@@ -13,6 +20,18 @@ function Admin() {
     const [password, setPassword] = useState("");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [tab, setTab] = useState("dashboard");
+    const [dashboardData, setDashboardData] = useState([]);
+    const buildings = [
+        "401",
+        "402",
+        "403",
+        "404",
+        "405",
+        "406",
+        "407",
+        "408",
+        "409",
+    ];
 
 
 
@@ -38,6 +57,46 @@ function Admin() {
 
         loadNotice();
     }, []);
+    useEffect(() => {
+        async function loadDashboard() {
+
+            const snapshot =
+                await getDocs(
+                    collection(db, "buildings")
+                );
+
+            const result = [];
+
+            snapshot.forEach((doc) => {
+                result.push({
+                    id: doc.id,
+                    ...doc.data(),
+                });
+            });
+
+            setDashboardData(result);
+        }
+
+        loadDashboard();
+    }, []);
+
+    const totalLunch = dashboardData.reduce(
+        (sum, building) =>
+            sum + (building.lunch || 0),
+        0
+    );
+
+    const totalSoup = dashboardData.reduce(
+        (sum, building) =>
+            sum + (building.soup || 0),
+        0
+    );
+
+    const totalLohas = dashboardData.reduce(
+        (sum, building) =>
+            sum + (building.lohas || 0),
+        0
+    );
 
     async function saveBuilding() {
         await setDoc(
@@ -202,20 +261,56 @@ function Admin() {
                 <div>
                     <h2>전체 현황</h2>
 
+                    <h3>전체 공지</h3>
+
+                    <textarea
+                        value={notice}
+                        onChange={(e) => setNotice(e.target.value)}
+                        style={{
+                            width: "100%",
+                            height: "100px",
+                        }}
+                    />
+
+                    <button
+                        onClick={saveNotice}
+                        style={{
+                            marginTop: "10px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        공지 저장
+                    </button>
+
                     <div
                         style={{
                             padding: "10px",
                             border: "1px solid gray",
                             borderRadius: "10px",
-                            marginBottom: "20px",
                         }}
                     >
-                        대시보드 준비중
+                        <div>🍱 전체 도시락 : {totalLunch}</div>
+                        <div>🥣 전체 국 : {totalSoup}</div>
+                        <div>🌱 전체 로하스밀 : {totalLohas}</div>
+                        <div>
+                            ☑ 전체 체크 :
+                            {
+                                dashboardData.reduce(
+                                    (sum, building) =>
+                                        sum +
+                                        (building.rooms || []).filter(
+                                            (room) => room.checked
+                                        ).length,
+                                    0
+                                )
+                            }
+                        </div>
                     </div>
                 </div>
             )}
             {tab === "building" && (
                 <div>
+                    <h2>동별 관리</h2>
                     <h2>동 선택</h2>
 
                     <select
@@ -237,26 +332,7 @@ function Admin() {
                         <option value="408">408동</option>
                         <option value="409">409동</option>
                     </select>
-                    <h2>전체 공지</h2>
 
-                    <textarea
-                        value={notice}
-                        onChange={(e) => setNotice(e.target.value)}
-                        style={{
-                            width: "100%",
-                            height: "100px",
-                        }}
-                    />
-
-                    <button
-                        onClick={saveNotice}
-                        style={{
-                            marginTop: "10px",
-                        }}
-                    >
-                        공지 저장
-                    </button>
-                    <hr style={{ marginTop: "30px", marginBottom: "30px" }} />
 
                     <h2>현재 선택 동</h2>
 
