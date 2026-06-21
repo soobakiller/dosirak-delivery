@@ -5,6 +5,7 @@ import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 function Admin() {
 
     const [notice, setNotice] = useState("");
+    const [buildingNotice, setBuildingNotice] = useState("");
     const [selectedBuilding, setSelectedBuilding] = useState("409");
     const [buildingData, setBuildingData] = useState(null);
     const [editData, setEditData] = useState(null);
@@ -40,7 +41,10 @@ function Admin() {
     async function saveBuilding() {
         await setDoc(
             doc(db, "buildings", selectedBuilding),
-            editData
+            {
+                ...editData,
+                notice: buildingNotice,
+            }
         );
 
         alert("동 정보 저장 완료!");
@@ -98,6 +102,7 @@ function Admin() {
                     ...room,
                 }));
 
+                setBuildingNotice(data.notice || "");
                 setBuildingData(data);
                 setEditData(data);
 
@@ -107,6 +112,7 @@ function Admin() {
                     soup: 0,
                     lohas: 0,
                     rooms: [],
+                    notice: "",
                 };
 
                 await setDoc(
@@ -234,6 +240,20 @@ function Admin() {
                         padding: "10px",
                     }}
                 >
+                    <h3>동별 공지</h3>
+
+                    <textarea
+                        value={buildingNotice}
+                        onChange={(e) =>
+                            setBuildingNotice(e.target.value)
+                        }
+                        style={{
+                            width: "100%",
+                            height: "80px",
+                            marginBottom: "10px",
+                        }}
+                    />
+
                     <div>
                         🍱 도시락 :
                         <input
