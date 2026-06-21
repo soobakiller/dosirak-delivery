@@ -75,6 +75,7 @@ function Admin() {
             });
 
             setDashboardData(result);
+            console.log(result);
         }
 
         loadDashboard();
@@ -96,6 +97,18 @@ function Admin() {
         (sum, building) =>
             sum + (building.lohas || 0),
         0
+    );
+
+    const buildingStatus = dashboardData.map(
+        (building) => ({
+            id: building.id,
+            checked:
+                (building.rooms || []).filter(
+                    (room) => room.checked
+                ).length,
+            total:
+                (building.rooms || []).length,
+        })
     );
 
     async function saveBuilding() {
@@ -285,7 +298,32 @@ function Admin() {
                                     0
                                 )
                             }
+
                         </div>
+                        <hr
+                            style={{
+                                marginTop: "15px",
+                                marginBottom: "15px",
+                            }}
+                        />
+                        {buildingStatus.map((building) => (
+                            <div
+                                key={building.id}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    marginBottom: "5px",
+                                }}
+                            >
+                                <span>{building.id}동</span>
+
+                                <span>
+                                    {building.checked}
+                                    /
+                                    {building.total}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                     <h3>전체 공지</h3>
 
