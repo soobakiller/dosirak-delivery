@@ -18,6 +18,8 @@ function Admin() {
     const [editData, setEditData] = useState(null);
     const [newRoom, setNewRoom] = useState("");
     const [password, setPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [adminPassword, setAdminPassword] = useState("1234");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [tab, setTab] = useState("dashboard");
     const [dashboardData, setDashboardData] = useState([]);
@@ -56,6 +58,22 @@ function Admin() {
         }
 
         loadNotice();
+    }, []);
+    useEffect(() => {
+        async function loadPassword() {
+
+            const docSnap = await getDoc(
+                doc(db, "settings", "admin")
+            );
+
+            if (docSnap.exists()) {
+                setAdminPassword(
+                    docSnap.data().password
+                );
+            }
+        }
+
+        loadPassword();
     }, []);
     useEffect(() => {
         async function loadDashboard() {
@@ -238,7 +256,7 @@ function Admin() {
 
                 <button
                     onClick={() => {
-                        if (password === "1234") {
+                        if (password === adminPassword) {
                             setIsLoggedIn(true);
                         } else {
                             alert("비밀번호가 틀렸습니다.");
@@ -374,6 +392,53 @@ function Admin() {
                     >
                         공지 저장
                     </button>
+
+                    <hr style={{ marginTop: "20px" }} />
+
+                    <h3>비밀번호 변경</h3>
+
+                    <input
+                        type="password"
+                        placeholder="새 비밀번호"
+                        value={newPassword}
+                        onChange={(e) =>
+                            setNewPassword(e.target.value)
+                        }
+                        style={{
+                            width: "100%",
+                            height: "40px",
+                            marginBottom: "10px",
+                        }}
+                    />
+
+                    <button
+                        onClick={async () => {
+
+                            if (!newPassword.trim()) {
+                                alert("비밀번호를 입력하세요.");
+                                return;
+                            }
+
+                            await setDoc(
+                                doc(db, "settings", "admin"),
+                                {
+                                    password: newPassword,
+                                }
+                            );
+
+                            setAdminPassword(newPassword);
+                            setNewPassword("");
+
+                            alert("비밀번호 변경 완료!");
+                        }}
+                        style={{
+                            width: "100%",
+                            height: "40px",
+                        }}
+                    >
+                        비밀번호 변경
+                    </button>
+
                 </div>
             )}
             {tab === "building" && (

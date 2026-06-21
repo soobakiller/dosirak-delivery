@@ -65,7 +65,11 @@ function App() {
     lunch: firebaseData[selectedBuilding]?.lunch || 0,
     soup: firebaseData[selectedBuilding]?.soup || 0,
     lohas: firebaseData[selectedBuilding]?.lohas || 0,
-    list: firebaseData[selectedBuilding]?.rooms || [],
+    list: [...(firebaseData[selectedBuilding]?.rooms || [])]
+      .sort(
+        (a, b) =>
+          parseInt(a.room) - parseInt(b.room)
+      ),
     notice: firebaseData[selectedBuilding]?.notice || "",
   };
 
