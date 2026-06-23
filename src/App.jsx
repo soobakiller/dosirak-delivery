@@ -14,6 +14,7 @@ function App() {
   const [hiddenBuildings, setHiddenBuildings] = useState([]);
 
 
+
   useEffect(() => {
     const unsubscribe = onSnapshot(
       doc(db, "notice", "all"),
@@ -101,6 +102,35 @@ function App() {
 
   }, []);
 
+
+  useEffect(() => {
+
+    window.history.replaceState(
+      { home: true },
+      ""
+    );
+
+    const handlePopState = () => {
+
+
+
+      setSelectedBuilding(null);
+    };
+
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
+
+    return () => {
+      window.removeEventListener(
+        "popstate",
+        handlePopState
+      );
+    };
+
+  }, []);
+
   console.log(firebaseData[selectedBuilding]);
 
   const currentData = {
@@ -145,7 +175,11 @@ function App() {
         }}
       >
         <button
-          onClick={() => setSelectedBuilding(null)}
+          onClick={() => {
+
+            window.history.back();
+
+          }}
           style={{
             marginBottom: "20px",
           }}
@@ -282,7 +316,15 @@ function App() {
         .map((building) => (
           <button
             key={building}
-            onClick={() => setSelectedBuilding(building)}
+            onClick={() => {
+
+              window.history.pushState(
+                { building },
+                ""
+              );
+
+              setSelectedBuilding(building);
+            }}
             style={{
               width: "100%",
               height: "60px",
