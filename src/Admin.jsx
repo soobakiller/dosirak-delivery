@@ -32,6 +32,7 @@ function Admin() {
 
 
 
+
     async function saveNotice() {
         await setDoc(
             doc(db, "notice", "all"),
@@ -463,6 +464,42 @@ function Admin() {
         loadBuilding();
     }, [selectedBuilding]);
 
+    useEffect(() => {
+
+        window.history.replaceState(
+            { tab: "dashboard" },
+            ""
+        );
+
+        const handlePopState = (event) => {
+
+            if (event.state?.tab) {
+
+                setTab(event.state.tab);
+
+                if (event.state.building) {
+                    setSelectedBuilding(
+                        event.state.building
+                    );
+                }
+            }
+
+        };
+
+        window.addEventListener(
+            "popstate",
+            handlePopState
+        );
+
+        return () => {
+            window.removeEventListener(
+                "popstate",
+                handlePopState
+            );
+        };
+
+    }, []);
+
     if (!isLoggedIn) {
         return (
             <div
@@ -489,6 +526,12 @@ function Admin() {
                 <button
                     onClick={() => {
                         if (password === adminPassword) {
+
+                            window.history.replaceState(
+                                { tab: "dashboard" },
+                                ""
+                            );
+
                             setIsLoggedIn(true);
                         } else {
                             alert("비밀번호가 틀렸습니다.");
@@ -521,19 +564,46 @@ function Admin() {
                 }}
             >
                 <button
-                    onClick={() => setTab("dashboard")}
+                    onClick={() => {
+
+                        window.history.pushState(
+                            { tab: "dashboard" },
+                            ""
+                        );
+
+                        setTab("dashboard");
+                    }}
                 >
                     📊 전체 현황
                 </button>
 
                 <button
-                    onClick={() => setTab("building")}
+                    onClick={() => {
+
+                        window.history.pushState(
+                            {
+                                tab: "building",
+                                building: selectedBuilding,
+                            },
+                            ""
+                        );
+
+                        setTab("building");
+                    }}
                 >
                     🏢 동별 관리
                 </button>
 
                 <button
-                    onClick={() => setTab("hidden")}
+                    onClick={() => {
+
+                        window.history.pushState(
+                            { tab: "hidden" },
+                            ""
+                        );
+
+                        setTab("hidden");
+                    }}
                 >
                     👁 숨김 관리
                 </button>
@@ -598,7 +668,17 @@ function Admin() {
                                             fontWeight: "bold",
                                         }}
                                         onClick={() => {
+
+                                            window.history.pushState(
+                                                {
+                                                    tab: "building",
+                                                    building: building.id,
+                                                },
+                                                ""
+                                            );
+
                                             setSelectedBuilding(building.id);
+
                                             setTab("building");
                                         }}
                                     >
