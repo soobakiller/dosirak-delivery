@@ -267,9 +267,14 @@ function Admin() {
     function addRoom() {
         if (!newRoom.trim()) return;
 
+        const roomName =
+            newRoom.endsWith("호")
+                ? newRoom
+                : `${newRoom}호`;
+
         const newItem = {
             id: Date.now(),
-            room: newRoom,
+            room: roomName,
             memo: "",
             checked: false,
         };
@@ -987,7 +992,16 @@ function Admin() {
                                     type="text"
                                     value={newRoom}
                                     placeholder="예: 1501호"
-                                    onChange={(e) => setNewRoom(e.target.value)}
+                                    onChange={(e) =>
+                                        setNewRoom(
+                                            e.target.value.replace(/[^0-9]/g, "")
+                                        )
+                                    }
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            addRoom();
+                                        }
+                                    }}
                                     style={{
                                         width: "150px",
                                     }}
