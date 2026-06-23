@@ -234,7 +234,14 @@ function App() {
               backgroundColor:
                 item.checked
                   ? "#444"
-                  : "transparent",
+                  : (
+                    item.soupExcluded ||
+                    item.lohasExcluded ||
+                    item.specialRequest ||
+                    item.memo
+                  )
+                    ? "#fffacd"
+                    : "transparent",
 
               opacity:
                 item.checked
@@ -269,7 +276,27 @@ function App() {
                 marginTop: "10px",
               }}
             >
-              메모 : {item.memo}
+
+              {item.soupExcluded && (
+                <div>🥣 국X</div>
+              )}
+
+              {item.lohasExcluded && (
+                <div>🌱 로하스밀X</div>
+              )}
+
+              {item.specialRequest && (
+                <div>
+                  🍱 {item.specialRequest}
+                </div>
+              )}
+
+              {item.memo && (
+                <div>
+                  📝 {item.memo}
+                </div>
+              )}
+
             </div>
           </div>
         ))}

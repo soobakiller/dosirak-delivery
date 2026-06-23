@@ -28,6 +28,7 @@ function Admin() {
     const [dashboardData, setDashboardData] = useState([]);
     const [buildings, setBuildings] = useState([]);
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
+    const [isDirty, setIsDirty] = useState(false);
 
 
 
@@ -217,6 +218,7 @@ function Admin() {
             rooms: sortedRooms,
         });
 
+        setIsDirty(false);
         alert("동 정보 저장 완료!");
     }
     async function resetChecks() {
@@ -276,6 +278,9 @@ function Admin() {
             id: Date.now(),
             room: roomName,
             memo: "",
+            soupExcluded: false,
+            lohasExcluded: false,
+            specialRequest: "",
             checked: false,
         };
 
@@ -284,6 +289,7 @@ function Admin() {
             ...editData,
             rooms: [...editData.rooms, newItem],
         });
+        setIsDirty(true);
 
         setNewRoom("");
     }
@@ -294,6 +300,7 @@ function Admin() {
                 (room) => room.id !== roomId
             ),
         });
+        setIsDirty(true);
     }
     async function addBuilding() {
 
@@ -571,6 +578,15 @@ function Admin() {
                 <button
                     onClick={() => {
 
+                        if (
+                            isDirty &&
+                            !window.confirm(
+                                "저장하지 않은 변경사항이 있습니다.\n이동할까요?"
+                            )
+                        ) {
+                            return;
+                        }
+
                         window.history.pushState(
                             { tab: "dashboard" },
                             ""
@@ -601,6 +617,15 @@ function Admin() {
 
                 <button
                     onClick={() => {
+
+                        if (
+                            isDirty &&
+                            !window.confirm(
+                                "저장하지 않은 변경사항이 있습니다.\n이동할까요?"
+                            )
+                        ) {
+                            return;
+                        }
 
                         window.history.pushState(
                             { tab: "hidden" },
@@ -807,7 +832,21 @@ function Admin() {
 
                     <select
                         value={selectedBuilding}
-                        onChange={(e) => setSelectedBuilding(e.target.value)}
+                        onChange={(e) => {
+
+                            if (
+                                isDirty &&
+                                !window.confirm(
+                                    "저장하지 않은 변경사항이 있습니다.\n동을 변경할까요?"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            setSelectedBuilding(
+                                e.target.value
+                            );
+                        }}
                         style={{
                             width: "100%",
                             height: "40px",
@@ -889,9 +928,10 @@ function Admin() {
 
                             <textarea
                                 value={buildingNotice}
-                                onChange={(e) =>
-                                    setBuildingNotice(e.target.value)
-                                }
+                                onChange={(e) => {
+                                    setBuildingNotice(e.target.value);
+                                    setIsDirty(true);
+                                }}
                                 style={{
                                     width: "100%",
                                     height: "80px",
@@ -904,12 +944,13 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.lunch || 0}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setEditData({
                                             ...editData,
                                             lunch: Number(e.target.value),
-                                        })
-                                    }
+                                        });
+                                        setIsDirty(true);
+                                    }}
                                     style={{ width: "80px", marginLeft: "10px" }}
                                 />
                             </div>
@@ -918,12 +959,13 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.soup || 0}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setEditData({
                                             ...editData,
                                             soup: Number(e.target.value),
-                                        })
-                                    }
+                                        });
+                                        setIsDirty(true);
+                                    }}
                                     style={{ width: "80px", marginLeft: "10px" }}
                                 />
                             </div>
@@ -932,12 +974,13 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.lohas || 0}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setEditData({
                                             ...editData,
                                             lohas: Number(e.target.value),
-                                        })
-                                    }
+                                        });
+                                        setIsDirty(true);
+                                    }}
                                     style={{ width: "80px", marginLeft: "10px" }}
                                 />
                             </div>
@@ -954,12 +997,114 @@ function Admin() {
                                     >
                                         <div>
                                             <div>🏠 {room.room}</div>
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    gap: "5px",
+                                                    marginTop: "3px",
+                                                }}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+
+                                                        setEditData({
+                                                            ...editData,
+                                                            rooms: editData.rooms.map((r) =>
+                                                                r.id === room.id
+                                                                    ? {
+                                                                        ...r,
+                                                                        soupExcluded:
+                                                                            !r.soupExcluded,
+                                                                    }
+                                                                    : r
+                                                            ),
+                                                        });
+
+                                                        setIsDirty(true);
+                                                    }}
+                                                >
+                                                    {room.soupExcluded
+                                                        ? "🥣 국X ✓"
+                                                        : "🥣 국X"}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+
+                                                        setEditData({
+                                                            ...editData,
+                                                            rooms: editData.rooms.map((r) =>
+                                                                r.id === room.id
+                                                                    ? {
+                                                                        ...r,
+                                                                        lohasExcluded:
+                                                                            !r.lohasExcluded,
+                                                                    }
+                                                                    : r
+                                                            ),
+                                                        });
+
+                                                        setIsDirty(true);
+                                                    }}
+                                                >
+                                                    {room.lohasExcluded
+                                                        ? "🌱 로하스밀X ✓"
+                                                        : "🌱 로하스밀X"}
+                                                </button>
+                                            </div>
+
+                                            <select
+                                                value={room.specialRequest || ""}
+                                                onChange={(e) => {
+
+                                                    setEditData({
+                                                        ...editData,
+                                                        rooms: editData.rooms.map((r) =>
+                                                            r.id === room.id
+                                                                ? {
+                                                                    ...r,
+                                                                    specialRequest:
+                                                                        e.target.value,
+                                                                }
+                                                                : r
+                                                        ),
+                                                    });
+
+                                                    setIsDirty(true);
+                                                }}
+                                                style={{
+                                                    width: "150px",
+                                                    marginTop: "3px",
+                                                }}
+                                            >
+                                                <option value="">
+                                                    없음
+                                                </option>
+
+                                                <option value="반찬만">
+                                                    반찬만
+                                                </option>
+
+                                                <option value="밥 많이">
+                                                    밥 많이
+                                                </option>
+
+                                                <option value="밥 더 많이">
+                                                    밥 더 많이
+                                                </option>
+
+                                                <option value="반찬 많이">
+                                                    반찬 많이
+                                                </option>
+                                            </select>
 
                                             <input
                                                 type="text"
                                                 value={room.memo}
                                                 placeholder="메모 입력"
-                                                onChange={(e) =>
+                                                onChange={(e) => {
                                                     setEditData({
                                                         ...editData,
                                                         rooms: editData.rooms.map((r) =>
@@ -970,8 +1115,10 @@ function Admin() {
                                                                 }
                                                                 : r
                                                         ),
-                                                    })
-                                                }
+                                                    });
+
+                                                    setIsDirty(true);
+                                                }}
                                                 style={{
                                                     width: "150px",
                                                     marginTop: "3px",
@@ -1021,10 +1168,19 @@ function Admin() {
                                 style={{
                                     marginTop: "15px",
                                     width: "100%",
-                                    height: "40px",
+                                    height: "55px",
+                                    backgroundColor:
+                                        isDirty
+                                            ? "#ff8800"
+                                            : "#2d8cff",
+                                    color: "white",
+                                    fontWeight: "bold",
+                                    fontSize: "18px",
                                 }}
                             >
-                                동 정보 저장
+                                {isDirty
+                                    ? "⚠ 저장 필요"
+                                    : "동 정보 저장"}
                             </button>
 
                             <button
