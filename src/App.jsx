@@ -10,7 +10,8 @@ function App() {
   const [firebaseData, setFirebaseData] = useState({});
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [globalNotice, setGlobalNotice] = useState("");
-  const [buildingNotice, setBuildingNotice] = useState("");
+  const [buildings, setBuildings] = useState([]);
+  const [hiddenBuildings, setHiddenBuildings] = useState([]);
 
 
   useEffect(() => {
@@ -26,38 +27,79 @@ function App() {
     return () => unsubscribe();
   }, []);
   useEffect(() => {
-    const unsubscribes = [];
 
-    for (let i = 401; i <= 409; i++) {
-      const docRef = doc(db, "buildings", String(i));
+    const unsubscribeList = [];
 
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setFirebaseData((prev) => ({
-            ...prev,
-            [`${i}동`]: docSnap.data(),
-          }));
+    buildings.forEach((building) => {
+
+      const buildingId =
+        building.replace("동", "");
+
+      const unsubscribe = onSnapshot(
+        doc(db, "buildings", buildingId),
+        (docSnap) => {
+
+          if (docSnap.exists()) {
+
+            setFirebaseData((prev) => ({
+              ...prev,
+              [`${buildingId}동`]:
+                docSnap.data(),
+            }));
+          }
         }
-      });
+      );
 
-      unsubscribes.push(unsubscribe);
-    }
+      unsubscribeList.push(unsubscribe);
+    });
 
     return () => {
-      unsubscribes.forEach((fn) => fn());
+      unsubscribeList.forEach(
+        (fn) => fn()
+      );
     };
+
+  }, [buildings]);
+
+  useEffect(() => {
+
+    const unsubscribe = onSnapshot(
+      doc(db, "settings", "buildings"),
+      (docSnap) => {
+
+        if (docSnap.exists()) {
+
+          setBuildings(
+            (docSnap.data().list || []).map(
+              (b) => `${b}동`
+            )
+          );
+        }
+      }
+    );
+
+    return () => unsubscribe();
+
   }, []);
-  const buildings = [
-    "401동",
-    "402동",
-    "403동",
-    "404동",
-    "405동",
-    "406동",
-    "407동",
-    "408동",
-    "409동",
-  ];
+
+  useEffect(() => {
+
+    const unsubscribe = onSnapshot(
+      doc(db, "settings", "buildingHidden"),
+      (docSnap) => {
+
+        if (docSnap.exists()) {
+
+          setHiddenBuildings(
+            docSnap.data().hidden || []
+          );
+        }
+      }
+    );
+
+    return () => unsubscribe();
+
+  }, []);
 
   console.log(firebaseData[selectedBuilding]);
 
@@ -230,22 +272,29 @@ function App() {
         📢 공지 : {globalNotice}
       </div>
 
-      {buildings.map((building) => (
-        <button
-          key={building}
-          onClick={() => setSelectedBuilding(building)}
-          style={{
-            width: "100%",
-            height: "60px",
-            marginBottom: "10px",
-            fontSize: "20px",
-            borderRadius: "10px",
-            cursor: "pointer",
-          }}
-        >
-          {building}
-        </button>
-      ))}
+      {buildings
+        .filter(
+          (building) =>
+            !hiddenBuildings.includes(
+              building.replace("동", "")
+            )
+        )
+        .map((building) => (
+          <button
+            key={building}
+            onClick={() => setSelectedBuilding(building)}
+            style={{
+              width: "100%",
+              height: "60px",
+              marginBottom: "10px",
+              fontSize: "20px",
+              borderRadius: "10px",
+              cursor: "pointer",
+            }}
+          >
+            {building}
+          </button>
+        ))}
     </div>
   );
 }
