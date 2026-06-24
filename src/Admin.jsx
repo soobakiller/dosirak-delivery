@@ -8,6 +8,7 @@ import {
     collection,
     getDocs,
     deleteDoc,
+    onSnapshot,
 } from "firebase/firestore";
 
 function Admin() {
@@ -144,27 +145,25 @@ function Admin() {
 
     useEffect(() => {
 
-        async function loadDashboard() {
+        const unsubscribe = onSnapshot(
+            collection(db, "buildings"),
+            (snapshot) => {
 
-            const snapshot =
-                await getDocs(
-                    collection(db, "buildings")
-                );
+                const result = [];
 
-            const result = [];
-
-            snapshot.forEach((doc) => {
-                result.push({
-                    id: doc.id,
-                    ...doc.data(),
+                snapshot.forEach((doc) => {
+                    result.push({
+                        id: doc.id,
+                        ...doc.data(),
+                    });
                 });
-            });
 
-            setDashboardData(result);
-            console.log(result);
-        }
+                setDashboardData(result);
+            }
+        );
 
-        loadDashboard();
+        return () => unsubscribe();
+
     }, []);
 
     const totalLunch = dashboardData.reduce(
