@@ -204,7 +204,7 @@ function App() {
           style={{
             border: "1px solid gray",
             borderRadius: "10px",
-            padding: "15px",
+            padding: "18px",
             marginBottom: "20px",
           }}
         >
@@ -229,8 +229,9 @@ function App() {
             style={{
               border: "1px solid gray",
               borderRadius: "10px",
-              padding: "15px",
+              padding: "18px",
               marginBottom: "10px",
+              fontSize: "18px",
 
               backgroundColor:
                 item.checked
@@ -266,6 +267,7 @@ function App() {
               <h3
                 style={{
                   margin: 0,
+                  fontSize: "24px",
                 }}
               >
                 {item.room}
@@ -275,6 +277,7 @@ function App() {
             <div
               style={{
                 marginTop: "10px",
+                fontSize: "18px",
               }}
             >
 
@@ -358,7 +361,7 @@ function App() {
               width: "100%",
               height: "60px",
               marginBottom: "10px",
-              fontSize: "20px",
+              fontSize: "22px",
               borderRadius: "10px",
               cursor: "pointer",
             }}
