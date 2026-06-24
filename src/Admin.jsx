@@ -240,6 +240,7 @@ function Admin() {
         const rooms = editData.rooms.map((room) => ({
             ...room,
             checked: false,
+            issue: false,
         }));
 
         await updateDoc(
@@ -269,6 +270,7 @@ function Admin() {
                 (room) => ({
                     ...room,
                     checked: false,
+                    issue: false,
                 })
             );
 
