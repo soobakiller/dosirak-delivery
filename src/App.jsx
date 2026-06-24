@@ -145,7 +145,29 @@ function App() {
     notice: firebaseData[selectedBuilding]?.notice || "",
   };
 
+  async function toggleIssue(item) {
+
+    const buildingNumber =
+      selectedBuilding.replace("동", "");
+
+    const rooms =
+      currentData.list.map((room) =>
+        room.id === item.id
+          ? {
+            ...room,
+            issue: !room.issue,
+          }
+          : room
+      );
+
+    await updateDoc(
+      doc(db, "buildings", buildingNumber),
+      { rooms }
+    );
+  }
+
   async function toggleCheck(item) {
+
     const buildingNumber =
       selectedBuilding.replace("동", "");
 
@@ -228,11 +250,13 @@ function App() {
           <div
             key={item.id}
             style={{
+              position: "relative",
               border: "1px solid gray",
               borderRadius: "10px",
               padding: "18px",
               marginBottom: "10px",
               fontSize: "18px",
+
 
               backgroundColor:
                 item.checked
@@ -265,14 +289,48 @@ function App() {
                 onChange={() => toggleCheck(item)}
               />
 
-              <h3
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: "24px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
                 }}
               >
-                {item.room}
-              </h3>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "24px",
+                    textDecoration:
+                      item.checked
+                        ? "line-through"
+                        : "none",
+                  }}
+                >
+                  {item.room}
+                </h3>
+
+                <button
+                  onClick={() => toggleIssue(item)}
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    border: "1px solid gray",
+                    cursor: "pointer",
+                    backgroundColor:
+                      item.issue
+                        ? "#ff4444"
+                        : "#ffd54f",
+                  }}
+                >
+                  ⚠️
+                </button>
+
+
+              </div>
             </label>
 
             <div
@@ -296,6 +354,12 @@ function App() {
                 </div>
               )}
 
+              {item.issue && (
+                <div>
+                  🚨 관리자 확인 필요
+                </div>
+              )}
+
               {item.memo && (
                 <div>
                   📝 {item.memo}
@@ -305,6 +369,7 @@ function App() {
             </div>
           </div>
         ))}
+
       </div>
     );
   }

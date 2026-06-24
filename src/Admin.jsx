@@ -30,6 +30,17 @@ function Admin() {
     const [buildings, setBuildings] = useState([]);
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
+    const [expandedIssues, setExpandedIssues] = useState(null);
+    const issueRooms = dashboardData.reduce(
+        (acc, building) => {
+            acc[building.id] =
+                (building.rooms || [])
+                    .filter(room => room.issue);
+
+            return acc;
+        },
+        {}
+    );
 
 
 
@@ -193,6 +204,11 @@ function Admin() {
                 ).length,
             total:
                 (building.rooms || []).length,
+
+            issues:
+                (building.rooms || []).filter(
+                    (room) => room.issue
+                ).length,
         })
     );
 
@@ -686,6 +702,7 @@ function Admin() {
                                     style={{
                                         display: "flex",
                                         justifyContent: "space-between",
+                                        alignItems: "center",
                                         marginBottom: "5px",
                                         padding: "4px",
                                         borderRadius: "5px",
@@ -714,18 +731,48 @@ function Admin() {
                                         {building.id}동
                                     </span>
 
-                                    <span>
-                                        {building.checked}
-                                        /
-                                        {building.total}
+                                    <span
+                                        style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <span>
+                                            ☑ {building.checked}/{building.total}
+                                        </span>
 
-                                        {building.total > 0 &&
-                                            building.checked === building.total &&
-                                            " ✅"}
+                                        {building.issues > 0 && (
+                                            <>
+                                                <span
+                                                    style={{
+                                                        cursor: "pointer",
+                                                    }}
+                                                    onClick={() =>
+                                                        setExpandedIssues(
+                                                            expandedIssues === building.id
+                                                                ? null
+                                                                : building.id
+                                                        )
+                                                    }
+                                                >
+                                                    🚨 {building.issues}
+                                                </span>
+
+
+
+                                            </>
+                                        )}
                                     </span>
+
+
                                 </div>
+
+
                             ))}
                     </div>
+
+
                     <button
                         onClick={resetAllChecks}
                         style={{
@@ -738,6 +785,28 @@ function Admin() {
                     >
                         전체 체크 초기화
                     </button>
+
+                    {expandedIssues && (
+                        <div
+                            style={{
+                                marginTop: "15px",
+                                padding: "10px",
+                                border: "1px solid red",
+                                borderRadius: "8px",
+                                color: "red",
+                            }}
+                        >
+                            <b>
+                                🚨 {expandedIssues}동 문제 호수
+                            </b>
+
+                            {issueRooms[expandedIssues]?.map(room => (
+                                <div key={room.id}>
+                                    - {room.room}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <h3>전체 공지</h3>
 
                     <textarea
@@ -924,6 +993,28 @@ function Admin() {
                             }}
                         >
                             <h3>동별 공지</h3>
+
+                            {editData?.rooms?.some(room => room.issue) && (
+                                <div
+                                    style={{
+                                        border: "2px solid red",
+                                        borderRadius: "10px",
+                                        padding: "10px",
+                                        marginBottom: "15px",
+                                        backgroundColor: "#fff0f0",
+                                    }}
+                                >
+                                    <b>🚨 문제 발생 호수</b>
+
+                                    {editData.rooms
+                                        .filter(room => room.issue)
+                                        .map(room => (
+                                            <div key={room.id}>
+                                                {room.room}
+                                            </div>
+                                        ))}
+                                </div>
+                            )}
 
                             <textarea
                                 value={buildingNotice}
