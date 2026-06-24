@@ -194,6 +194,7 @@ function App() {
             borderRadius: "10px",
             padding: "10px",
             marginBottom: "20px",
+            whiteSpace: "pre-line",
           }}
         >
           📢 동별 공지 : {currentData.notice}
@@ -328,6 +329,7 @@ function App() {
           borderRadius: "10px",
           padding: "10px",
           marginBottom: "20px",
+          whiteSpace: "pre-line",
         }}
       >
         📢 공지 : {globalNotice}
