@@ -206,6 +206,7 @@ function App() {
             borderRadius: "10px",
             padding: "18px",
             marginBottom: "20px",
+            fontSize: "18px",
           }}
         >
           <div>🍱 도시락 : {currentData.lunch}개</div>
