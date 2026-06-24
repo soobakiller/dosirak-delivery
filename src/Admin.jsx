@@ -697,53 +697,53 @@ function Admin() {
                                     )
                             )
                             .map((building) => (
-                                <div
-                                    key={building.id}
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        marginBottom: "5px",
-                                        padding: "4px",
-                                        borderRadius: "5px",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            cursor: "pointer",
-                                            fontWeight: "bold",
-                                        }}
-                                        onClick={() => {
-
-                                            window.history.pushState(
-                                                {
-                                                    tab: "building",
-                                                    building: building.id,
-                                                },
-                                                ""
-                                            );
-
-                                            setSelectedBuilding(building.id);
-
-                                            setTab("building");
-                                        }}
-                                    >
-                                        {building.id}동
-                                    </span>
-
-                                    <span
+                                <>
+                                    <div
+                                        key={building.id}
                                         style={{
                                             display: "flex",
-                                            gap: "10px",
+                                            justifyContent: "space-between",
                                             alignItems: "center",
+                                            marginBottom: "5px",
+                                            padding: "4px",
+                                            borderRadius: "5px",
                                         }}
                                     >
-                                        <span>
-                                            ☑ {building.checked}/{building.total}
+                                        <span
+                                            style={{
+                                                cursor: "pointer",
+                                                fontWeight: "bold",
+                                            }}
+                                            onClick={() => {
+
+                                                window.history.pushState(
+                                                    {
+                                                        tab: "building",
+                                                        building: building.id,
+                                                    },
+                                                    ""
+                                                );
+
+                                                setSelectedBuilding(building.id);
+
+                                                setTab("building");
+                                            }}
+                                        >
+                                            {building.id}동
                                         </span>
 
-                                        {building.issues > 0 && (
-                                            <>
+                                        <span
+                                            style={{
+                                                display: "flex",
+                                                gap: "10px",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <span>
+                                                ☑ {building.checked}/{building.total}
+                                            </span>
+
+                                            {building.issues > 0 && (
                                                 <span
                                                     style={{
                                                         cursor: "pointer",
@@ -758,19 +758,40 @@ function Admin() {
                                                 >
                                                     🚨 {building.issues}
                                                 </span>
+                                            )}
+
+                                        </span>
 
 
+                                    </div>
 
-                                            </>
-                                        )}
-                                    </span>
+                                    {expandedIssues === building.id && (
+                                        <div
+                                            style={{
+                                                marginLeft: "20px",
+                                                marginBottom: "10px",
+                                                color: "red",
+                                                fontSize: "14px",
+                                            }}
+                                        >
+                                            <div>🚨 문제 호수</div>
 
+                                            {issueRooms[building.id]?.map((room) => (
+                                                <div key={room.id}>
+                                                    - {room.room}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
 
-                                </div>
 
 
                             ))}
-                    </div>
+
+                    </div >
+
+
 
 
                     <button
@@ -786,27 +807,7 @@ function Admin() {
                         전체 체크 초기화
                     </button>
 
-                    {expandedIssues && (
-                        <div
-                            style={{
-                                marginTop: "15px",
-                                padding: "10px",
-                                border: "1px solid red",
-                                borderRadius: "8px",
-                                color: "red",
-                            }}
-                        >
-                            <b>
-                                🚨 {expandedIssues}동 문제 호수
-                            </b>
 
-                            {issueRooms[expandedIssues]?.map(room => (
-                                <div key={room.id}>
-                                    - {room.room}
-                                </div>
-                            ))}
-                        </div>
-                    )}
                     <h3>전체 공지</h3>
 
                     <textarea
