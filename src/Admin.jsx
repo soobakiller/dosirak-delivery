@@ -209,6 +209,8 @@ function Admin() {
                 (building.rooms || []).filter(
                     (room) => room.issue
                 ).length,
+            hasDeliveryMemo:
+                Boolean((building.deliveryMemo || "").trim()),
         })
     );
 
@@ -251,9 +253,9 @@ function Admin() {
 
         alert("체크 초기화 완료!");
     }
-    async function resetAllChecks() {
+    async function resetAllDeliveryStatus() {
 
-        if (!window.confirm("전체 동의 체크를 초기화할까요?")) {
+        if (!window.confirm("전체 동의 체크, 문제 표시, 배달 특이사항 메모를 초기화할까요?")) {
             return;
         }
 
@@ -277,11 +279,14 @@ function Admin() {
 
             await updateDoc(
                 doc(db, "buildings", buildingId),
-                { rooms }
+                {
+                    rooms,
+                    deliveryMemo: "",
+                }
             );
         }
 
-        alert("전체 체크 초기화 완료!");
+        alert("전체 배달 현황 초기화 완료!");
         window.location.reload();
     }
     function addRoom() {
@@ -719,6 +724,9 @@ function Admin() {
                                     >
                                         <span
                                             style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "5px",
                                                 cursor: "pointer",
                                                 fontWeight: "bold",
                                             }}
@@ -737,7 +745,19 @@ function Admin() {
                                                 setTab("building");
                                             }}
                                         >
-                                            {building.id}동
+                                            <span>{building.id}동</span>
+                                            {building.hasDeliveryMemo && (
+                                                <span
+                                                    title="배달 특이사항 메모 있음"
+                                                    aria-label="배달 특이사항 메모 있음"
+                                                    style={{
+                                                        fontSize: "16px",
+                                                        lineHeight: 1,
+                                                    }}
+                                                >
+                                                    📝
+                                                </span>
+                                            )}
                                         </span>
 
                                         <span
@@ -803,7 +823,7 @@ function Admin() {
 
 
                     <button
-                        onClick={resetAllChecks}
+                        onClick={resetAllDeliveryStatus}
                         style={{
                             width: "100%",
                             height: "40px",
@@ -812,7 +832,7 @@ function Admin() {
                             backgroundColor: "#aa3333",
                         }}
                     >
-                        전체 체크 초기화
+                        전체 배달 현황 초기화
                     </button>
 
 
