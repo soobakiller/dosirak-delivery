@@ -1134,16 +1134,34 @@ function Admin() {
                                         style={{
                                             display: "flex",
                                             justifyContent: "space-between",
-                                            marginBottom: "5px",
+                                            gap: "10px",
+                                            marginBottom: "12px",
+                                            paddingBottom: "12px",
+                                            borderBottom: "1px solid #444",
                                         }}
                                     >
-                                        <div>
-                                            <div>🏠 {room.room}</div>
+                                        <div
+                                            style={{
+                                                flex: 1,
+                                                minWidth: 0,
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    marginBottom: "6px",
+                                                    fontSize: "18px",
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                🏠 {room.room}
+                                            </div>
                                             <div
                                                 style={{
                                                     display: "flex",
+                                                    flexWrap: "wrap",
                                                     gap: "5px",
-                                                    marginTop: "3px",
+                                                    alignItems: "center",
+                                                    marginBottom: "6px",
                                                 }}
                                             >
                                                 <button
@@ -1195,52 +1213,53 @@ function Admin() {
                                                         ? "🌱 로하스밀X ✓"
                                                         : "🌱 로하스밀X"}
                                                 </button>
+
+                                                <select
+                                                    value={room.specialRequest || ""}
+                                                    onChange={(e) => {
+
+                                                        setEditData({
+                                                            ...editData,
+                                                            rooms: editData.rooms.map((r) =>
+                                                                r.id === room.id
+                                                                    ? {
+                                                                        ...r,
+                                                                        specialRequest:
+                                                                            e.target.value,
+                                                                    }
+                                                                    : r
+                                                            ),
+                                                        });
+
+                                                        setIsDirty(true);
+                                                    }}
+                                                    style={{
+                                                        flex: "1 1 130px",
+                                                        minWidth: "120px",
+                                                        height: "30px",
+                                                    }}
+                                                >
+                                                    <option value="">
+                                                        없음
+                                                    </option>
+
+                                                    <option value="반찬만">
+                                                        반찬만
+                                                    </option>
+
+                                                    <option value="밥 많이">
+                                                        밥 많이
+                                                    </option>
+
+                                                    <option value="밥 더 많이">
+                                                        밥 더 많이
+                                                    </option>
+
+                                                    <option value="반찬 많이">
+                                                        반찬 많이
+                                                    </option>
+                                                </select>
                                             </div>
-
-                                            <select
-                                                value={room.specialRequest || ""}
-                                                onChange={(e) => {
-
-                                                    setEditData({
-                                                        ...editData,
-                                                        rooms: editData.rooms.map((r) =>
-                                                            r.id === room.id
-                                                                ? {
-                                                                    ...r,
-                                                                    specialRequest:
-                                                                        e.target.value,
-                                                                }
-                                                                : r
-                                                        ),
-                                                    });
-
-                                                    setIsDirty(true);
-                                                }}
-                                                style={{
-                                                    width: "150px",
-                                                    marginTop: "3px",
-                                                }}
-                                            >
-                                                <option value="">
-                                                    없음
-                                                </option>
-
-                                                <option value="반찬만">
-                                                    반찬만
-                                                </option>
-
-                                                <option value="밥 많이">
-                                                    밥 많이
-                                                </option>
-
-                                                <option value="밥 더 많이">
-                                                    밥 더 많이
-                                                </option>
-
-                                                <option value="반찬 많이">
-                                                    반찬 많이
-                                                </option>
-                                            </select>
 
                                             <input
                                                 type="text"
@@ -1262,14 +1281,26 @@ function Admin() {
                                                     setIsDirty(true);
                                                 }}
                                                 style={{
-                                                    width: "150px",
-                                                    marginTop: "3px",
+                                                    boxSizing: "border-box",
+                                                    width: "100%",
+                                                    height: "32px",
                                                 }}
                                             />
                                         </div>
 
                                         <button
                                             onClick={() => deleteRoom(room.id)}
+                                            style={{
+                                                alignSelf: "flex-start",
+                                                minWidth: "48px",
+                                                height: "34px",
+                                                border: "none",
+                                                borderRadius: "5px",
+                                                backgroundColor: "#c62828",
+                                                color: "white",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                            }}
                                         >
                                             삭제
                                         </button>
