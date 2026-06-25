@@ -225,6 +225,7 @@ function Admin() {
                 ...editData,
                 rooms: sortedRooms,
                 notice: buildingNotice,
+                deliveryMemo: buildingData?.deliveryMemo || "",
             }
         );
 
@@ -351,6 +352,7 @@ function Admin() {
                 lohas: 0,
                 rooms: [],
                 notice: "",
+                deliveryMemo: "",
             }
         );
 
@@ -454,10 +456,9 @@ function Admin() {
         alert(`${buildingId} 삭제 완료`);
     }
     useEffect(() => {
-        async function loadBuilding() {
-            const docRef = doc(db, "buildings", selectedBuilding);
-            const docSnap = await getDoc(docRef);
+        const docRef = doc(db, "buildings", selectedBuilding);
 
+        const unsubscribe = onSnapshot(docRef, async (docSnap) => {
             if (docSnap.exists()) {
 
                 const data = docSnap.data();
@@ -467,9 +468,12 @@ function Admin() {
                     ...room,
                 }));
 
-                setBuildingNotice(data.notice || "");
                 setBuildingData(data);
-                setEditData(data);
+
+                if (!isDirty) {
+                    setBuildingNotice(data.notice || "");
+                    setEditData(data);
+                }
 
             } else {
                 const emptyData = {
@@ -478,20 +482,22 @@ function Admin() {
                     lohas: 0,
                     rooms: [],
                     notice: "",
+                    deliveryMemo: "",
                 };
 
-                await setDoc(
-                    doc(db, "buildings", selectedBuilding),
-                    emptyData
-                );
+                await setDoc(docRef, emptyData);
 
                 setBuildingData(emptyData);
-                setEditData(emptyData);
-            }
-        }
 
-        loadBuilding();
-    }, [selectedBuilding]);
+                if (!isDirty) {
+                    setBuildingNotice("");
+                    setEditData(emptyData);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [selectedBuilding, isDirty]);
 
     useEffect(() => {
 
@@ -1078,6 +1084,29 @@ function Admin() {
                                 />
                             </div>
                             <div>🏠 호수 수 : {editData?.rooms.length}</div>
+                            <div
+                                style={{
+                                    marginTop: "15px",
+                                    padding: "10px",
+                                    border: "1px solid #7c8db5",
+                                    borderRadius: "10px",
+                                    backgroundColor: "#f7f9ff",
+                                    whiteSpace: "pre-wrap",
+                                }}
+                            >
+                                <b>배달 특이사항 메모</b>
+                                <div
+                                    style={{
+                                        marginTop: "8px",
+                                        minHeight: "44px",
+                                        color: buildingData?.deliveryMemo
+                                            ? "#222"
+                                            : "#777",
+                                    }}
+                                >
+                                    {buildingData?.deliveryMemo || "아직 입력된 메모가 없습니다."}
+                                </div>
+                            </div>
                             <div style={{ marginTop: "15px" }}>
                                 {editData?.rooms.map((room) => (
                                     <div

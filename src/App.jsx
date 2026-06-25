@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db } from "./firebase";
 import {
   doc,
@@ -12,6 +12,9 @@ function App() {
   const [globalNotice, setGlobalNotice] = useState("");
   const [buildings, setBuildings] = useState([]);
   const [hiddenBuildings, setHiddenBuildings] = useState([]);
+  const [deliveryMemo, setDeliveryMemo] = useState("");
+  const [memoSaveStatus, setMemoSaveStatus] = useState("");
+  const memoSaveTimer = useRef(null);
 
 
 
@@ -143,7 +146,20 @@ function App() {
           parseInt(a.room) - parseInt(b.room)
       ),
     notice: firebaseData[selectedBuilding]?.notice || "",
+    deliveryMemo: firebaseData[selectedBuilding]?.deliveryMemo || "",
   };
+
+  useEffect(() => {
+    setDeliveryMemo(currentData.deliveryMemo);
+  }, [selectedBuilding, currentData.deliveryMemo]);
+
+  useEffect(() => {
+    return () => {
+      if (memoSaveTimer.current) {
+        clearTimeout(memoSaveTimer.current);
+      }
+    };
+  }, []);
 
   async function toggleIssue(item) {
 
@@ -185,6 +201,32 @@ function App() {
       doc(db, "buildings", buildingNumber),
       { rooms }
     );
+  }
+
+  function handleDeliveryMemoChange(value) {
+    setDeliveryMemo(value);
+    setMemoSaveStatus("저장 중...");
+
+    if (memoSaveTimer.current) {
+      clearTimeout(memoSaveTimer.current);
+    }
+
+    memoSaveTimer.current = setTimeout(async () => {
+      try {
+        const buildingNumber =
+          selectedBuilding.replace("동", "");
+
+        await updateDoc(
+          doc(db, "buildings", buildingNumber),
+          { deliveryMemo: value }
+        );
+
+        setMemoSaveStatus("자동 저장됨");
+      } catch (error) {
+        console.error(error);
+        setMemoSaveStatus("저장 실패");
+      }
+    }, 600);
   }
 
   if (selectedBuilding) {
@@ -243,6 +285,55 @@ function App() {
             }
             /
             {currentData.list.length}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #7c8db5",
+            borderRadius: "10px",
+            padding: "14px",
+            marginBottom: "20px",
+            backgroundColor: "#f7f9ff",
+          }}
+        >
+          <label
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontWeight: "bold",
+            }}
+          >
+            배달 특이사항 메모
+          </label>
+          <textarea
+            value={deliveryMemo}
+            placeholder="배달 중 확인한 특이사항을 적어주세요."
+            onChange={(e) => handleDeliveryMemoChange(e.target.value)}
+            style={{
+              boxSizing: "border-box",
+              width: "100%",
+              minHeight: "90px",
+              padding: "10px",
+              border: "1px solid #b8c2d8",
+              borderRadius: "8px",
+              resize: "vertical",
+              fontSize: "16px",
+              lineHeight: 1.5,
+            }}
+          />
+          <div
+            style={{
+              minHeight: "20px",
+              marginTop: "6px",
+              color:
+                memoSaveStatus === "저장 실패"
+                  ? "#b00020"
+                  : "#526173",
+              fontSize: "13px",
+            }}
+          >
+            {memoSaveStatus}
           </div>
         </div>
 
