@@ -763,12 +763,30 @@ function Admin() {
                                         <span
                                             style={{
                                                 display: "flex",
-                                                gap: "10px",
+                                                gap: "8px",
                                                 alignItems: "center",
                                             }}
                                         >
-                                            <span>
-                                                ☑ {building.checked}/{building.total}
+                                            <span
+                                                style={{
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    width: "18px",
+                                                    flex: "0 0 18px",
+                                                }}
+                                            >
+                                                ☑
+                                            </span>
+                                            <span
+                                                style={{
+                                                    display: "inline-block",
+                                                    width: "44px",
+                                                    textAlign: "right",
+                                                    fontVariantNumeric: "tabular-nums",
+                                                }}
+                                            >
+                                                {building.checked}/{building.total}
                                             </span>
 
                                             {building.issues > 0 && (
