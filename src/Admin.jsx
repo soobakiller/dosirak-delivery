@@ -6,7 +6,6 @@ import {
     getDoc,
     updateDoc,
     collection,
-    getDocs,
     deleteDoc,
     onSnapshot,
 } from "firebase/firestore";
@@ -287,7 +286,6 @@ function Admin() {
         }
 
         alert("전체 배달 현황 초기화 완료!");
-        window.location.reload();
     }
     function addRoom() {
         if (!newRoom.trim()) return;
@@ -710,9 +708,8 @@ function Admin() {
                                     )
                             )
                             .map((building) => (
-                                <>
+                                <div key={building.id}>
                                     <div
-                                        key={building.id}
                                         style={{
                                             display: "flex",
                                             justifyContent: "space-between",
@@ -829,7 +826,7 @@ function Admin() {
                                             ))}
                                         </div>
                                     )}
-                                </>
+                                </div>
 
 
 

@@ -134,8 +134,6 @@ function App() {
 
   }, []);
 
-  console.log(firebaseData[selectedBuilding]);
-
   const currentData = {
     lunch: firebaseData[selectedBuilding]?.lunch || 0,
     soup: firebaseData[selectedBuilding]?.soup || 0,
