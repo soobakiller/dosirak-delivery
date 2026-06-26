@@ -146,24 +146,6 @@ function App() {
     notice: firebaseData[selectedBuilding]?.notice || "",
     deliveryMemo: firebaseData[selectedBuilding]?.deliveryMemo || "",
   };
-  const checkedCount = currentData.list.filter(
-    (room) => room.checked
-  ).length;
-  const issueCount = currentData.list.filter(
-    (room) => room.issue
-  ).length;
-  const attentionCount = currentData.list.filter(
-    (room) =>
-      room.soupExcluded ||
-      room.lohasExcluded ||
-      room.specialRequest ||
-      room.memo ||
-      room.issue
-  ).length;
-  const progressPercent = currentData.list.length
-    ? Math.round((checkedCount / currentData.list.length) * 100)
-    : 0;
-
   useEffect(() => {
     setDeliveryMemo(currentData.deliveryMemo);
   }, [selectedBuilding, currentData.deliveryMemo]);
@@ -296,84 +278,6 @@ function App() {
           <div>🍱 도시락 : {currentData.lunch}개</div>
           <div>🥣 국 : {currentData.soup}개</div>
           <div>🌱 로하스밀 : {currentData.lohas}개</div>
-          <div>
-            진행률 :
-            {checkedCount}
-            /
-            {currentData.list.length}
-          </div>
-          <div
-            style={{
-              height: "10px",
-              borderRadius: "999px",
-              overflow: "hidden",
-              marginTop: "10px",
-              backgroundColor: "#e5e7eb",
-            }}
-          >
-            <div
-              style={{
-                width: `${progressPercent}%`,
-                height: "100%",
-                backgroundColor:
-                  progressPercent === 100
-                    ? "#16a34a"
-                    : "#2563eb",
-              }}
-            />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "10px",
-              fontSize: "14px",
-              lineHeight: 1.3,
-            }}
-          >
-            <span
-              style={{
-                flex: 1,
-                padding: "6px 8px",
-                borderRadius: "8px",
-                backgroundColor: "#eef2ff",
-                color: "#1e40af",
-                fontWeight: 700,
-              }}
-            >
-              {progressPercent}%
-            </span>
-            <span
-              style={{
-                flex: 1,
-                padding: "6px 8px",
-                borderRadius: "8px",
-                backgroundColor: "#fff7ed",
-                color: "#9a3412",
-                fontWeight: 700,
-              }}
-            >
-              주의 {attentionCount}
-            </span>
-            <span
-              style={{
-                flex: 1,
-                padding: "6px 8px",
-                borderRadius: "8px",
-                backgroundColor:
-                  issueCount > 0
-                    ? "#fee2e2"
-                    : "#f0fdf4",
-                color:
-                  issueCount > 0
-                    ? "#b91c1c"
-                    : "#166534",
-                fontWeight: 700,
-              }}
-            >
-              문제 {issueCount}
-            </span>
-          </div>
         </div>
 
         <div
