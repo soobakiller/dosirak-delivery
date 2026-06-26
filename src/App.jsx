@@ -428,6 +428,7 @@ function App() {
         {currentData.list.map((item) => (
           <div
             key={item.id}
+            onClick={() => toggleCheck(item)}
             style={{
               position: "relative",
               border:
@@ -465,6 +466,7 @@ function App() {
                   )
                     ? "0 0 0 3px rgba(245, 158, 11, 0.14)"
                     : "none",
+              cursor: "pointer",
 
 
               backgroundColor:
@@ -485,7 +487,7 @@ function App() {
                   : 1,
             }}
           >
-            <label
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -498,6 +500,7 @@ function App() {
                 type="checkbox"
                 checked={item.checked}
                 onChange={() => toggleCheck(item)}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   width: "22px",
                   height: "22px",
@@ -527,7 +530,10 @@ function App() {
                 </h3>
 
                 <button
-                  onClick={() => toggleIssue(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleIssue(item);
+                  }}
                   style={{
                     position: "absolute",
                     top: "10px",
@@ -548,7 +554,7 @@ function App() {
 
 
               </div>
-            </label>
+            </div>
 
             <div
               style={{
