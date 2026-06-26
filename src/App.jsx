@@ -146,6 +146,23 @@ function App() {
     notice: firebaseData[selectedBuilding]?.notice || "",
     deliveryMemo: firebaseData[selectedBuilding]?.deliveryMemo || "",
   };
+  const checkedCount = currentData.list.filter(
+    (room) => room.checked
+  ).length;
+  const issueCount = currentData.list.filter(
+    (room) => room.issue
+  ).length;
+  const attentionCount = currentData.list.filter(
+    (room) =>
+      room.soupExcluded ||
+      room.lohasExcluded ||
+      room.specialRequest ||
+      room.memo ||
+      room.issue
+  ).length;
+  const progressPercent = currentData.list.length
+    ? Math.round((checkedCount / currentData.list.length) * 100)
+    : 0;
 
   useEffect(() => {
     setDeliveryMemo(currentData.deliveryMemo);
@@ -267,7 +284,12 @@ function App() {
             border: "1px solid gray",
             borderRadius: "10px",
             padding: "18px",
+            position: "sticky",
+            top: 0,
+            zIndex: 5,
             marginBottom: "20px",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.08)",
             fontSize: "18px",
           }}
         >
@@ -276,13 +298,81 @@ function App() {
           <div>🌱 로하스밀 : {currentData.lohas}개</div>
           <div>
             진행률 :
-            {
-              currentData.list.filter(
-                (room) => room.checked
-              ).length
-            }
+            {checkedCount}
             /
             {currentData.list.length}
+          </div>
+          <div
+            style={{
+              height: "10px",
+              borderRadius: "999px",
+              overflow: "hidden",
+              marginTop: "10px",
+              backgroundColor: "#e5e7eb",
+            }}
+          >
+            <div
+              style={{
+                width: `${progressPercent}%`,
+                height: "100%",
+                backgroundColor:
+                  progressPercent === 100
+                    ? "#16a34a"
+                    : "#2563eb",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              marginTop: "10px",
+              fontSize: "14px",
+              lineHeight: 1.3,
+            }}
+          >
+            <span
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "8px",
+                backgroundColor: "#eef2ff",
+                color: "#1e40af",
+                fontWeight: 700,
+              }}
+            >
+              {progressPercent}%
+            </span>
+            <span
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "8px",
+                backgroundColor: "#fff7ed",
+                color: "#9a3412",
+                fontWeight: 700,
+              }}
+            >
+              주의 {attentionCount}
+            </span>
+            <span
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "8px",
+                backgroundColor:
+                  issueCount > 0
+                    ? "#fee2e2"
+                    : "#f0fdf4",
+                color:
+                  issueCount > 0
+                    ? "#b91c1c"
+                    : "#166534",
+                fontWeight: 700,
+              }}
+            >
+              문제 {issueCount}
+            </span>
           </div>
         </div>
 
@@ -340,16 +430,46 @@ function App() {
             key={item.id}
             style={{
               position: "relative",
-              border: "1px solid gray",
+              border:
+                item.issue
+                  ? "2px solid #ef4444"
+                  : (
+                    item.soupExcluded ||
+                    item.lohasExcluded ||
+                    item.specialRequest ||
+                    item.memo
+                  )
+                    ? "2px solid #f59e0b"
+                    : "1px solid #d1d5db",
               borderRadius: "10px",
+              boxSizing: "border-box",
+              height: "132px",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
               padding: "18px",
               marginBottom: "10px",
               fontSize: "18px",
+              color:
+                item.checked
+                  ? "#f8fafc"
+                  : "#111827",
+              boxShadow:
+                item.issue
+                  ? "0 0 0 3px rgba(239, 68, 68, 0.14)"
+                  : (
+                    item.soupExcluded ||
+                    item.lohasExcluded ||
+                    item.specialRequest ||
+                    item.memo
+                  )
+                    ? "0 0 0 3px rgba(245, 158, 11, 0.14)"
+                    : "none",
 
 
               backgroundColor:
                 item.checked
-                  ? "#444"
+                  ? "#374151"
                   : (
                     item.soupExcluded ||
                     item.lohasExcluded ||
@@ -370,12 +490,20 @@ function App() {
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
+                cursor: "pointer",
+                minHeight: "32px",
               }}
             >
               <input
                 type="checkbox"
                 checked={item.checked}
                 onChange={() => toggleCheck(item)}
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  accentColor: "#2563eb",
+                  cursor: "pointer",
+                }}
               />
 
               <div
@@ -426,6 +554,9 @@ function App() {
               style={{
                 marginTop: "10px",
                 fontSize: "18px",
+                flex: 1,
+                overflowY: "auto",
+                paddingRight: "4px",
               }}
             >
 
