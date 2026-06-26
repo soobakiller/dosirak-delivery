@@ -230,9 +230,11 @@ function App() {
     return (
       <div
         style={{
-          maxWidth: "400px",
+          width: "min(440px, 100vw)",
+          maxWidth: "440px",
           margin: "0 auto",
           padding: "20px",
+          boxSizing: "border-box",
         }}
       >
         <button
@@ -253,8 +255,11 @@ function App() {
           style={{
             border: "1px solid #666",
             borderRadius: "10px",
+            boxSizing: "border-box",
+            width: "100%",
             padding: "10px",
             marginBottom: "20px",
+            overflowWrap: "anywhere",
             whiteSpace: "pre-line",
           }}
         >
@@ -265,6 +270,8 @@ function App() {
           style={{
             border: "1px solid gray",
             borderRadius: "10px",
+            boxSizing: "border-box",
+            width: "100%",
             padding: "18px",
             position: "sticky",
             top: 0,
@@ -284,6 +291,8 @@ function App() {
           style={{
             border: "1px solid #7c8db5",
             borderRadius: "10px",
+            boxSizing: "border-box",
+            width: "100%",
             padding: "14px",
             marginBottom: "20px",
             backgroundColor: "#f7f9ff",
@@ -335,6 +344,7 @@ function App() {
             onClick={() => toggleCheck(item)}
             style={{
               position: "relative",
+              width: "100%",
               border:
                 item.issue
                   ? "2px solid #ef4444"
@@ -464,8 +474,10 @@ function App() {
               style={{
                 marginTop: "10px",
                 fontSize: "18px",
+                minWidth: 0,
                 flex: 1,
                 overflowY: "auto",
+                overflowWrap: "anywhere",
                 paddingRight: "4px",
               }}
             >
