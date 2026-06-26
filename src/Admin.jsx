@@ -229,27 +229,53 @@ function Admin() {
         }
     }, [dashboardData, expandedIssues]);
 
+    function syncMealCountsWithRooms(data, nextRooms) {
+        const prevRooms = data.rooms || [];
+        const previousCount = prevRooms.length;
+        const nextCount = nextRooms.length;
+        const nextLunch = Math.max(
+            data.lunch === previousCount
+                ? nextCount
+                : (data.lunch ?? nextCount),
+            nextCount
+        );
+
+        return {
+            ...data,
+            lunch: nextLunch,
+            soup:
+                data.soup === previousCount
+                    ? nextCount
+                    : (data.soup ?? nextCount),
+            lohas:
+                data.lohas === previousCount
+                    ? nextCount
+                    : (data.lohas ?? nextCount),
+            rooms: nextRooms,
+        };
+    }
+
     async function saveBuilding() {
 
         const sortedRooms = [...editData.rooms].sort(
             (a, b) =>
                 parseInt(a.room) - parseInt(b.room)
         );
+        const nextData = syncMealCountsWithRooms(
+            editData,
+            sortedRooms
+        );
 
         await setDoc(
             doc(db, "buildings", selectedBuilding),
             {
-                ...editData,
-                rooms: sortedRooms,
+                ...nextData,
                 notice: buildingNotice,
                 deliveryMemo: buildingData?.deliveryMemo || "",
             }
         );
 
-        setEditData({
-            ...editData,
-            rooms: sortedRooms,
-        });
+        setEditData(nextData);
 
         setIsDirty(false);
         alert("동 정보 저장 완료!");
@@ -324,21 +350,25 @@ function Admin() {
         };
 
 
-        setEditData({
-            ...editData,
-            rooms: [...editData.rooms, newItem],
-        });
+        setEditData(
+            syncMealCountsWithRooms(
+                editData,
+                [...editData.rooms, newItem]
+            )
+        );
         setIsDirty(true);
 
         setNewRoom("");
     }
     function deleteRoom(roomId) {
-        setEditData({
-            ...editData,
-            rooms: editData.rooms.filter(
-                (room) => room.id !== roomId
-            ),
-        });
+        setEditData(
+            syncMealCountsWithRooms(
+                editData,
+                editData.rooms.filter(
+                    (room) => room.id !== roomId
+                )
+            )
+        );
         setIsDirty(true);
     }
     async function addBuilding() {
@@ -488,12 +518,16 @@ function Admin() {
                     checked: false,
                     ...room,
                 }));
+                const normalizedData = syncMealCountsWithRooms(
+                    data,
+                    data.rooms
+                );
 
-                setBuildingData(data);
+                setBuildingData(normalizedData);
 
                 if (!isDirty) {
-                    setBuildingNotice(data.notice || "");
-                    setEditData(data);
+                    setBuildingNotice(normalizedData.notice || "");
+                    setEditData(normalizedData);
                 }
 
             } else {
@@ -1099,7 +1133,10 @@ function Admin() {
                                     onChange={(e) => {
                                         setEditData({
                                             ...editData,
-                                            lunch: Number(e.target.value),
+                                            lunch: Math.max(
+                                                Number(e.target.value),
+                                                editData.rooms.length
+                                            ),
                                         });
                                         setIsDirty(true);
                                     }}
