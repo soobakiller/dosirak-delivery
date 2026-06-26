@@ -30,11 +30,39 @@ function Admin() {
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
     const [expandedIssues, setExpandedIssues] = useState(null);
+    function getEffectiveMealCounts(building) {
+        const rooms = building.rooms || [];
+        const pausedRooms = rooms.filter(
+            (room) => room.paused
+        );
+
+        return {
+            lunch: Math.max(
+                (building.lunch || 0) - pausedRooms.length,
+                0
+            ),
+            soup: Math.max(
+                (building.soup || 0) -
+                pausedRooms.filter(
+                    (room) => !room.soupExcluded
+                ).length,
+                0
+            ),
+            lohas: Math.max(
+                (building.lohas || 0) -
+                pausedRooms.filter(
+                    (room) => !room.lohasExcluded
+                ).length,
+                0
+            ),
+        };
+    }
+
     const issueRooms = dashboardData.reduce(
         (acc, building) => {
             acc[building.id] =
                 (building.rooms || [])
-                    .filter(room => room.issue);
+                    .filter(room => room.issue && !room.paused);
 
             return acc;
         },
@@ -178,39 +206,45 @@ function Admin() {
 
     const totalLunch = dashboardData.reduce(
         (sum, building) =>
-            sum + (building.lunch || 0),
+            sum + getEffectiveMealCounts(building).lunch,
         0
     );
 
     const totalSoup = dashboardData.reduce(
         (sum, building) =>
-            sum + (building.soup || 0),
+            sum + getEffectiveMealCounts(building).soup,
         0
     );
 
     const totalLohas = dashboardData.reduce(
         (sum, building) =>
-            sum + (building.lohas || 0),
+            sum + getEffectiveMealCounts(building).lohas,
         0
     );
 
     const buildingStatus = dashboardData.map(
-        (building) => ({
-            id: building.id,
-            checked:
-                (building.rooms || []).filter(
-                    (room) => room.checked
-                ).length,
-            total:
-                (building.rooms || []).length,
+        (building) => {
+            const activeRooms = (building.rooms || []).filter(
+                (room) => !room.paused
+            );
 
-            issues:
-                (building.rooms || []).filter(
-                    (room) => room.issue
-                ).length,
-            hasDeliveryMemo:
-                Boolean((building.deliveryMemo || "").trim()),
-        })
+            return {
+                id: building.id,
+                checked:
+                    activeRooms.filter(
+                        (room) => room.checked
+                    ).length,
+                total:
+                    activeRooms.length,
+
+                issues:
+                    activeRooms.filter(
+                        (room) => room.issue
+                    ).length,
+                hasDeliveryMemo:
+                    Boolean((building.deliveryMemo || "").trim()),
+            };
+        }
     );
 
     useEffect(() => {
@@ -317,6 +351,7 @@ function Admin() {
                     ...room,
                     checked: false,
                     issue: false,
+                    paused: false,
                 })
             );
 
@@ -347,6 +382,7 @@ function Admin() {
             lohasExcluded: false,
             specialRequest: "",
             checked: false,
+            paused: false,
         };
 
 
@@ -516,6 +552,7 @@ function Admin() {
 
                 data.rooms = (data.rooms || []).map((room) => ({
                     checked: false,
+                    paused: false,
                     ...room,
                 }));
                 const normalizedData = syncMealCountsWithRooms(
@@ -1208,6 +1245,10 @@ function Admin() {
                                             marginBottom: "12px",
                                             paddingBottom: "12px",
                                             borderBottom: "1px solid #444",
+                                            opacity:
+                                                room.paused
+                                                    ? 0.55
+                                                    : 1,
                                         }}
                                     >
                                         <div
@@ -1221,6 +1262,10 @@ function Admin() {
                                                     marginBottom: "6px",
                                                     fontSize: "18px",
                                                     fontWeight: "bold",
+                                                    textDecoration:
+                                                        room.paused
+                                                            ? "line-through"
+                                                            : "none",
                                                 }}
                                             >
                                                 🏠 {room.room}
@@ -1358,6 +1403,14 @@ function Admin() {
                                             />
                                         </div>
 
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "6px",
+                                                alignSelf: "flex-start",
+                                            }}
+                                        >
                                         <button
                                             onClick={() => deleteRoom(room.id)}
                                             style={{
@@ -1374,6 +1427,49 @@ function Admin() {
                                         >
                                             삭제
                                         </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditData({
+                                                    ...editData,
+                                                    rooms: editData.rooms.map((r) =>
+                                                        r.id === room.id
+                                                            ? {
+                                                                ...r,
+                                                                paused: !r.paused,
+                                                                checked:
+                                                                    !r.paused
+                                                                        ? false
+                                                                        : r.checked,
+                                                            }
+                                                            : r
+                                                    ),
+                                                });
+
+                                                setIsDirty(true);
+                                            }}
+                                            style={{
+                                                minWidth: "64px",
+                                                minHeight: "34px",
+                                                border: "1px solid #777",
+                                                borderRadius: "5px",
+                                                backgroundColor:
+                                                    room.paused
+                                                        ? "#f59e0b"
+                                                        : "#f3f4f6",
+                                                color:
+                                                    room.paused
+                                                        ? "#111827"
+                                                        : "#333",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            {room.paused
+                                                ? "재개"
+                                                : "일시 중지"}
+                                        </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

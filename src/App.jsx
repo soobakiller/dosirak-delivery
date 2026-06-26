@@ -134,17 +134,36 @@ function App() {
 
   }, []);
 
+  const selectedData = firebaseData[selectedBuilding] || {};
+  const allRooms = [...(selectedData.rooms || [])]
+    .sort(
+      (a, b) =>
+        parseInt(a.room) - parseInt(b.room)
+    );
+  const pausedRooms = allRooms.filter((room) => room.paused);
   const currentData = {
-    lunch: firebaseData[selectedBuilding]?.lunch || 0,
-    soup: firebaseData[selectedBuilding]?.soup || 0,
-    lohas: firebaseData[selectedBuilding]?.lohas || 0,
-    list: [...(firebaseData[selectedBuilding]?.rooms || [])]
-      .sort(
-        (a, b) =>
-          parseInt(a.room) - parseInt(b.room)
-      ),
-    notice: firebaseData[selectedBuilding]?.notice || "",
-    deliveryMemo: firebaseData[selectedBuilding]?.deliveryMemo || "",
+    lunch: Math.max(
+      (selectedData.lunch || 0) - pausedRooms.length,
+      0
+    ),
+    soup: Math.max(
+      (selectedData.soup || 0) -
+      pausedRooms.filter(
+        (room) => !room.soupExcluded
+      ).length,
+      0
+    ),
+    lohas: Math.max(
+      (selectedData.lohas || 0) -
+      pausedRooms.filter(
+        (room) => !room.lohasExcluded
+      ).length,
+      0
+    ),
+    list: allRooms.filter((room) => !room.paused),
+    allRooms,
+    notice: selectedData.notice || "",
+    deliveryMemo: selectedData.deliveryMemo || "",
   };
   useEffect(() => {
     setDeliveryMemo(currentData.deliveryMemo);
@@ -164,7 +183,7 @@ function App() {
       selectedBuilding.replace("동", "");
 
     const rooms =
-      currentData.list.map((room) =>
+      currentData.allRooms.map((room) =>
         room.id === item.id
           ? {
             ...room,
@@ -185,7 +204,7 @@ function App() {
       selectedBuilding.replace("동", "");
 
     const rooms =
-      currentData.list.map((room) =>
+      currentData.allRooms.map((room) =>
         room.id === item.id
           ? {
             ...room,
