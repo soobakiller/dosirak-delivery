@@ -213,6 +213,22 @@ function Admin() {
         })
     );
 
+    useEffect(() => {
+        if (!expandedIssues) return;
+
+        const expandedBuilding = dashboardData.find(
+            (building) => building.id === expandedIssues
+        );
+
+        const hasIssues = expandedBuilding?.rooms?.some(
+            (room) => room.issue
+        );
+
+        if (!hasIssues) {
+            setExpandedIssues(null);
+        }
+    }, [dashboardData, expandedIssues]);
+
     async function saveBuilding() {
 
         const sortedRooms = [...editData.rooms].sort(
@@ -257,6 +273,8 @@ function Admin() {
         if (!window.confirm("전체 동의 체크, 문제 표시, 배달 특이사항 메모를 초기화할까요?")) {
             return;
         }
+
+        setExpandedIssues(null);
 
         for (const buildingId of buildings) {
 
