@@ -527,7 +527,11 @@ function App() {
               )}
 
               {item.memo && (
-                <div>
+                <div
+                  style={{
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   📝 {item.memo}
                 </div>
               )}

@@ -1385,8 +1385,7 @@ function Admin() {
                                                 </select>
                                             </div>
 
-                                            <input
-                                                type="text"
+                                            <textarea
                                                 value={room.memo}
                                                 placeholder="메모 입력"
                                                 onChange={(e) => {
@@ -1407,7 +1406,8 @@ function Admin() {
                                                 style={{
                                                     boxSizing: "border-box",
                                                     width: "100%",
-                                                    height: "32px",
+                                                    minHeight: "54px",
+                                                    resize: "vertical",
                                                 }}
                                             />
                                         </div>
