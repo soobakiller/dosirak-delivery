@@ -134,8 +134,17 @@ function App() {
 
   }, []);
 
+  function normalizeRoom(room) {
+    return {
+      checked: false,
+      ...room,
+      paused: room.paused === true,
+    };
+  }
+
   const selectedData = firebaseData[selectedBuilding] || {};
   const allRooms = [...(selectedData.rooms || [])]
+    .map(normalizeRoom)
     .sort(
       (a, b) =>
         parseInt(a.room) - parseInt(b.room)

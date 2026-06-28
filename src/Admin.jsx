@@ -30,10 +30,23 @@ function Admin() {
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
     const [expandedIssues, setExpandedIssues] = useState(null);
+
+    function isRoomPaused(room) {
+        return room.paused === true;
+    }
+
+    function normalizeRoom(room) {
+        return {
+            checked: false,
+            ...room,
+            paused: room.paused === true,
+        };
+    }
+
     function getEffectiveMealCounts(building) {
         const rooms = building.rooms || [];
         const pausedRooms = rooms.filter(
-            (room) => room.paused
+            isRoomPaused
         );
 
         return {
@@ -62,7 +75,7 @@ function Admin() {
         (acc, building) => {
             acc[building.id] =
                 (building.rooms || [])
-                    .filter(room => room.issue && !room.paused);
+                    .filter(room => room.issue && !isRoomPaused(room));
 
             return acc;
         },
@@ -225,7 +238,7 @@ function Admin() {
     const buildingStatus = dashboardData.map(
         (building) => {
             const activeRooms = (building.rooms || []).filter(
-                (room) => !room.paused
+                (room) => !isRoomPaused(room)
             );
 
             return {
@@ -294,7 +307,7 @@ function Admin() {
         const sortedRooms = [...editData.rooms].sort(
             (a, b) =>
                 parseInt(a.room) - parseInt(b.room)
-        );
+        ).map(normalizeRoom);
         const nextData = syncMealCountsWithRooms(
             editData,
             sortedRooms
@@ -550,11 +563,7 @@ function Admin() {
 
                 const data = docSnap.data();
 
-                data.rooms = (data.rooms || []).map((room) => ({
-                    checked: false,
-                    paused: false,
-                    ...room,
-                }));
+                data.rooms = (data.rooms || []).map(normalizeRoom);
                 const normalizedData = syncMealCountsWithRooms(
                     data,
                     data.rooms
