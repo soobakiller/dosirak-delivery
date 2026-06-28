@@ -142,6 +142,15 @@ function App() {
     };
   }
 
+  function hasRoomHighlight(item) {
+    return Boolean(
+      item.soupExcluded ||
+      item.lohasExcluded ||
+      item.specialRequest ||
+      item.memo
+    );
+  }
+
   const selectedData = firebaseData[selectedBuilding] || {};
   const allRooms = [...(selectedData.rooms || [])]
     .map(normalizeRoom)
@@ -376,12 +385,7 @@ function App() {
               border:
                 item.issue
                   ? "2px solid #ef4444"
-                  : (
-                    item.soupExcluded ||
-                    item.lohasExcluded ||
-                    item.specialRequest ||
-                    item.memo
-                  )
+                  : hasRoomHighlight(item)
                     ? "2px solid #f59e0b"
                     : "1px solid #d1d5db",
               borderRadius: "10px",
@@ -400,12 +404,7 @@ function App() {
               boxShadow:
                 item.issue
                   ? "0 0 0 3px rgba(239, 68, 68, 0.14)"
-                  : (
-                    item.soupExcluded ||
-                    item.lohasExcluded ||
-                    item.specialRequest ||
-                    item.memo
-                  )
+                  : hasRoomHighlight(item)
                     ? "0 0 0 3px rgba(245, 158, 11, 0.14)"
                     : "none",
               cursor: "pointer",
@@ -414,14 +413,11 @@ function App() {
               backgroundColor:
                 item.checked
                   ? "#374151"
-                  : (
-                    item.soupExcluded ||
-                    item.lohasExcluded ||
-                    item.specialRequest ||
-                    item.memo
-                  )
+                  : item.issue
+                    ? "#fff1f2"
+                    : hasRoomHighlight(item)
                     ? "#fffacd"
-                    : "transparent",
+                    : "#ffffff",
 
               opacity:
                 item.checked
