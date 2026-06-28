@@ -1382,6 +1382,10 @@ function Admin() {
                                                     <option value="반찬 많이">
                                                         반찬 많이
                                                     </option>
+
+                                                    <option value="선물 배달">
+                                                        선물 배달
+                                                    </option>
                                                 </select>
                                             </div>
 
