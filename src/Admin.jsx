@@ -284,7 +284,9 @@ function Admin() {
             return {
                 id: building.id,
                 checked:
-                    effectiveMealCounts.lunch,
+                    activeRooms.filter(
+                        (room) => room.checked
+                    ).length,
                 total:
                     effectiveMealCounts.lunch,
 
