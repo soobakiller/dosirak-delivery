@@ -279,13 +279,25 @@ function Admin() {
             const activeRooms = (building.rooms || []).filter(
                 (room) => !isRoomPaused(room)
             );
+            const liveBuilding = dashboardData.find(
+                (item) => item.id === building.id
+            );
+            const liveRooms = liveBuilding?.rooms || [];
             const effectiveMealCounts = getEffectiveMealCounts(building);
 
             return {
                 id: building.id,
                 checked:
                     activeRooms.filter(
-                        (room) => room.checked
+                        (room) => {
+                            const liveRoom = liveRooms.find(
+                                (item) => item.id === room.id
+                            );
+
+                            return liveRoom
+                                ? liveRoom.checked
+                                : room.checked;
+                        }
                     ).length,
                 total:
                     effectiveMealCounts.lunch,
