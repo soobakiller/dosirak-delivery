@@ -279,15 +279,14 @@ function Admin() {
             const activeRooms = (building.rooms || []).filter(
                 (room) => !isRoomPaused(room)
             );
+            const effectiveMealCounts = getEffectiveMealCounts(building);
 
             return {
                 id: building.id,
                 checked:
-                    activeRooms.filter(
-                        (room) => room.checked
-                    ).length,
+                    effectiveMealCounts.lunch,
                 total:
-                    activeRooms.length,
+                    effectiveMealCounts.lunch,
 
                 issues:
                     activeRooms.filter(
