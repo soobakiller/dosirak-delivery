@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "./firebase";
 import {
     doc,
@@ -71,7 +71,46 @@ function Admin() {
         };
     }
 
-    const issueRooms = dashboardData.reduce(
+    const dashboardSourceData = useMemo(() => {
+        if (!selectedBuilding || !editData) {
+            return dashboardData;
+        }
+
+        const editedBuilding = {
+            ...editData,
+            id: selectedBuilding,
+            notice: buildingNotice,
+            deliveryMemo:
+                buildingData?.deliveryMemo ||
+                editData.deliveryMemo ||
+                "",
+        };
+
+        if (
+            !dashboardData.some(
+                (building) => building.id === selectedBuilding
+            )
+        ) {
+            return [...dashboardData, editedBuilding];
+        }
+
+        return dashboardData.map((building) =>
+            building.id === selectedBuilding
+                ? {
+                    ...building,
+                    ...editedBuilding,
+                }
+                : building
+        );
+    }, [
+        buildingData?.deliveryMemo,
+        buildingNotice,
+        dashboardData,
+        editData,
+        selectedBuilding,
+    ]);
+
+    const issueRooms = dashboardSourceData.reduce(
         (acc, building) => {
             acc[building.id] =
                 (building.rooms || [])
@@ -217,25 +256,25 @@ function Admin() {
 
     }, []);
 
-    const totalLunch = dashboardData.reduce(
+    const totalLunch = dashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).lunch,
         0
     );
 
-    const totalSoup = dashboardData.reduce(
+    const totalSoup = dashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).soup,
         0
     );
 
-    const totalLohas = dashboardData.reduce(
+    const totalLohas = dashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).lohas,
         0
     );
 
-    const buildingStatus = dashboardData.map(
+    const buildingStatus = dashboardSourceData.map(
         (building) => {
             const activeRooms = (building.rooms || []).filter(
                 (room) => !isRoomPaused(room)
@@ -260,10 +299,20 @@ function Admin() {
         }
     );
 
+    const totalCheckedRooms = buildingStatus.reduce(
+        (sum, building) => sum + building.checked,
+        0
+    );
+
+    const totalActiveRooms = buildingStatus.reduce(
+        (sum, building) => sum + building.total,
+        0
+    );
+
     useEffect(() => {
         if (!expandedIssues) return;
 
-        const expandedBuilding = dashboardData.find(
+        const expandedBuilding = dashboardSourceData.find(
             (building) => building.id === expandedIssues
         );
 
@@ -274,7 +323,7 @@ function Admin() {
         if (!hasIssues) {
             setExpandedIssues(null);
         }
-    }, [dashboardData, expandedIssues]);
+    }, [dashboardSourceData, expandedIssues]);
 
     function syncMealCountsWithRooms(data, nextRooms) {
         const prevRooms = data.rooms || [];
@@ -323,6 +372,10 @@ function Admin() {
         );
 
         setEditData(nextData);
+        setBuildingData({
+            ...nextData,
+            deliveryMemo: buildingData?.deliveryMemo || "",
+        });
 
         setIsDirty(false);
         alert("동 정보 저장 완료!");
@@ -458,6 +511,9 @@ function Admin() {
 
         setBuildings(updatedBuildings);
 
+        setEditData(null);
+        setBuildingData(null);
+        setBuildingNotice("");
         setSelectedBuilding(newBuilding);
 
         setNewBuilding("");
@@ -780,16 +836,7 @@ function Admin() {
                         <div>🌱 전체 로하스밀 : {totalLohas}</div>
                         <div>
                             ☑ 전체 체크 :
-                            {
-                                dashboardData.reduce(
-                                    (sum, building) =>
-                                        sum +
-                                        (building.rooms || []).filter(
-                                            (room) => room.checked
-                                        ).length,
-                                    0
-                                )
-                            }
+                            {totalCheckedRooms}/{totalActiveRooms}
 
                         </div>
                         <hr
@@ -826,6 +873,15 @@ function Admin() {
                                                 fontWeight: "bold",
                                             }}
                                             onClick={() => {
+                                                if (
+                                                    isDirty &&
+                                                    building.id !== selectedBuilding &&
+                                                    !window.confirm(
+                                                        "저장하지 않은 변경사항이 있습니다.\n동을 변경할까요?"
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
 
                                                 window.history.pushState(
                                                     {
@@ -834,6 +890,13 @@ function Admin() {
                                                     },
                                                     ""
                                                 );
+
+                                                if (building.id !== selectedBuilding) {
+                                                    setIsDirty(false);
+                                                    setEditData(null);
+                                                    setBuildingData(null);
+                                                    setBuildingNotice("");
+                                                }
 
                                                 setSelectedBuilding(building.id);
 
@@ -1053,6 +1116,10 @@ function Admin() {
                                 return;
                             }
 
+                            setIsDirty(false);
+                            setEditData(null);
+                            setBuildingData(null);
+                            setBuildingNotice("");
                             setSelectedBuilding(
                                 e.target.value
                             );
