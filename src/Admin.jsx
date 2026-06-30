@@ -322,6 +322,70 @@ function Admin() {
         0
     );
 
+    const visibleBuildingStatus = buildingStatus
+        .filter(
+            (building) =>
+                !hiddenBuildings.includes(building.id)
+        )
+        .sort((a, b) => a.id.localeCompare(b.id, "ko"));
+
+    const visibleDashboardBuildings = dashboardSourceData
+        .filter(
+            (building) =>
+                !hiddenBuildings.includes(building.id)
+        )
+        .sort((a, b) => a.id.localeCompare(b.id, "ko"));
+
+    const totalIssueRooms = visibleBuildingStatus.reduce(
+        (sum, building) => sum + building.issues,
+        0
+    );
+
+    const totalPendingRooms = Math.max(
+        totalActiveRooms - totalCheckedRooms,
+        0
+    );
+
+    const liveIssueList = visibleDashboardBuildings.flatMap(
+        (building) =>
+            (building.rooms || [])
+                .filter((room) => room.issue && !isRoomPaused(room))
+                .map((room) => ({
+                    buildingId: building.id,
+                    ...room,
+                }))
+    );
+
+    function openBuilding(buildingId) {
+        if (
+            isDirty &&
+            buildingId !== selectedBuilding &&
+            !window.confirm(
+                "??ν븯吏 ?딆? 蹂寃쎌궗??씠 ?덉뒿?덈떎.\n?숈쓣 蹂寃쏀븷源뚯슂?"
+            )
+        ) {
+            return;
+        }
+
+        window.history.pushState(
+            {
+                tab: "building",
+                building: buildingId,
+            },
+            ""
+        );
+
+        if (buildingId !== selectedBuilding) {
+            setIsDirty(false);
+            setEditData(null);
+            setBuildingData(null);
+            setBuildingNotice("");
+        }
+
+        setSelectedBuilding(buildingId);
+        setTab("building");
+    }
+
     useEffect(() => {
         if (!expandedIssues) return;
 
@@ -755,7 +819,7 @@ function Admin() {
     return (
         <div
             style={{
-                maxWidth: "500px",
+                maxWidth: tab === "live" ? "980px" : "500px",
                 margin: "0 auto",
                 padding: "20px",
             }}
@@ -789,6 +853,29 @@ function Admin() {
                     }}
                 >
                     📊 전체 현황
+                </button>
+
+                <button
+                    onClick={() => {
+
+                        if (
+                            isDirty &&
+                            !window.confirm(
+                                "저장하지 않은 변경사항이 있습니다.\n이동할까요?"
+                            )
+                        ) {
+                            return;
+                        }
+
+                        window.history.pushState(
+                            { tab: "live" },
+                            ""
+                        );
+
+                        setTab("live");
+                    }}
+                >
+                    🟢 실시간 현황판
                 </button>
 
                 <button
@@ -831,11 +918,346 @@ function Admin() {
                     👁 숨김 관리
                 </button>
             </div>
+            {tab === "live" && (
+                <div>
+                    <h2>실시간 현황판</h2>
+
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                            gap: "10px",
+                            marginBottom: "14px",
+                        }}
+                    >
+                        {[
+                            ["전체", totalActiveRooms],
+                            ["완료", totalCheckedRooms],
+                            ["대기", totalPendingRooms],
+                            ["문제", totalIssueRooms],
+                        ].map(([label, value]) => (
+                            <div
+                                key={label}
+                                style={{
+                                    minHeight: "74px",
+                                    padding: "12px",
+                                    border: "1px solid #d1d5db",
+                                    borderRadius: "8px",
+                                    boxSizing: "border-box",
+                                    backgroundColor:
+                                        label === "문제" && value > 0
+                                            ? "#fff1f2"
+                                            : "#ffffff",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        color: "#6b7280",
+                                        fontSize: "13px",
+                                    }}
+                                >
+                                    {label}
+                                </div>
+                                <div
+                                    style={{
+                                        marginTop: "4px",
+                                        color:
+                                            label === "문제" && value > 0
+                                                ? "#b91c1c"
+                                                : "#111827",
+                                        fontSize: "28px",
+                                        fontWeight: "bold",
+                                        fontVariantNumeric: "tabular-nums",
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    {value}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                            gap: "8px",
+                            padding: "12px",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "8px",
+                            marginBottom: "14px",
+                            backgroundColor: "#f9fafb",
+                        }}
+                    >
+                        <div>🍱 전체 도시락 : {totalLunch}</div>
+                        <div>🥣 전체 국 : {totalSoup}</div>
+                        <div>🌱 전체 로하스밀 : {totalLohas}</div>
+                    </div>
+
+                    {liveIssueList.length > 0 && (
+                        <div
+                            style={{
+                                padding: "12px",
+                                border: "1px solid #fecdd3",
+                                borderRadius: "8px",
+                                marginBottom: "14px",
+                                backgroundColor: "#fff1f2",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    marginBottom: "8px",
+                                    color: "#991b1b",
+                                    fontWeight: "bold",
+                                }}
+                            >
+                                문제 발생 호수
+                            </div>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "6px",
+                                }}
+                            >
+                                {liveIssueList.map((room) => (
+                                    <button
+                                        key={`${room.buildingId}-${room.id}`}
+                                        type="button"
+                                        onClick={() => openBuilding(room.buildingId)}
+                                        style={{
+                                            minHeight: "32px",
+                                            padding: "4px 8px",
+                                            border: "1px solid #f43f5e",
+                                            borderRadius: "6px",
+                                            backgroundColor: "#ffffff",
+                                            color: "#9f1239",
+                                            fontWeight: "bold",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        {room.buildingId}동 {room.room} 🚨
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                            gap: "14px",
+                            marginBottom: "16px",
+                        }}
+                    >
+                        {visibleDashboardBuildings.map((building) => {
+                            const status =
+                                visibleBuildingStatus.find(
+                                    (item) => item.id === building.id
+                                ) || {
+                                    checked: 0,
+                                    total: 0,
+                                    issues: 0,
+                                    hasDeliveryMemo: false,
+                                };
+                            const rooms = [...(building.rooms || [])]
+                                .map(normalizeRoom)
+                                .sort(
+                                    (a, b) =>
+                                        parseInt(a.room) - parseInt(b.room)
+                                );
+
+                            return (
+                                <div
+                                    key={building.id}
+                                    style={{
+                                        border: status.issues > 0
+                                            ? "2px solid #ef4444"
+                                            : "1px solid #0f6b99",
+                                        borderRadius: "8px",
+                                        padding: "12px",
+                                        backgroundColor: "#ffffff",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            gap: "10px",
+                                            marginBottom: "10px",
+                                        }}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => openBuilding(building.id)}
+                                            style={{
+                                                padding: 0,
+                                                border: "none",
+                                                background: "transparent",
+                                                color: "#111827",
+                                                fontSize: "22px",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            {building.id}동
+                                        </button>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                                color: "#4b5563",
+                                                fontSize: "14px",
+                                                fontVariantNumeric: "tabular-nums",
+                                                whiteSpace: "nowrap",
+                                            }}
+                                        >
+                                            {status.hasDeliveryMemo && (
+                                                <span title="배달 특이사항 메모 있음">
+                                                    📝
+                                                </span>
+                                            )}
+                                            <span>
+                                                ✓ {status.checked}/{status.total}
+                                            </span>
+                                            {status.issues > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpandedIssues(
+                                                            expandedIssues === building.id
+                                                                ? null
+                                                                : building.id
+                                                        )
+                                                    }
+                                                    style={{
+                                                        border: "none",
+                                                        background: "transparent",
+                                                        color: "#dc2626",
+                                                        fontWeight: "bold",
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    🚨 {status.issues}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {expandedIssues === building.id && (
+                                        <div
+                                            style={{
+                                                marginBottom: "10px",
+                                                padding: "8px",
+                                                borderRadius: "6px",
+                                                backgroundColor: "#fff1f2",
+                                                color: "#b91c1c",
+                                                fontSize: "14px",
+                                            }}
+                                        >
+                                            문제 호수:{" "}
+                                            {issueRooms[building.id]
+                                                ?.map((room) => room.room)
+                                                .join(", ")}
+                                        </div>
+                                    )}
+
+                                    <div
+                                        style={{
+                                            display: "grid",
+                                            gridTemplateColumns:
+                                                "repeat(4, minmax(0, 1fr))",
+                                            gap: "8px",
+                                        }}
+                                    >
+                                        {rooms.map((room) => {
+                                            const paused = isRoomPaused(room);
+                                            const borderColor = room.issue
+                                                ? "#ef4444"
+                                                : room.checked
+                                                ? "#16a34a"
+                                                : paused
+                                                ? "#9ca3af"
+                                                : "#d1d5db";
+                                            const backgroundColor = room.issue
+                                                ? "#fff1f2"
+                                                : room.checked
+                                                ? "#ecfdf5"
+                                                : paused
+                                                ? "#f3f4f6"
+                                                : "#ffffff";
+                                            const color = paused
+                                                ? "#6b7280"
+                                                : "#111827";
+
+                                            return (
+                                                <button
+                                                    key={room.id}
+                                                    type="button"
+                                                    title={`${building.id}동 ${room.room}`}
+                                                    onClick={() => openBuilding(building.id)}
+                                                    style={{
+                                                        minWidth: 0,
+                                                        height: "36px",
+                                                        padding: "0 6px",
+                                                        border: `2px solid ${borderColor}`,
+                                                        borderRadius: "4px",
+                                                        backgroundColor,
+                                                        color,
+                                                        display: "grid",
+                                                        gridTemplateColumns: "1fr 22px",
+                                                        alignItems: "center",
+                                                        gap: "2px",
+                                                        cursor: "pointer",
+                                                        fontSize: "14px",
+                                                        fontWeight: "bold",
+                                                        boxSizing: "border-box",
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            overflow: "hidden",
+                                                            textOverflow: "ellipsis",
+                                                            whiteSpace: "nowrap",
+                                                            textAlign: "left",
+                                                        }}
+                                                    >
+                                                        {room.room}
+                                                    </span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        style={{
+                                                            textAlign: "center",
+                                                            lineHeight: 1,
+                                                        }}
+                                                    >
+                                                        {room.issue
+                                                            ? "🚨"
+                                                            : room.checked
+                                                            ? "✓"
+                                                            : paused
+                                                            ? "Ⅱ"
+                                                            : ""}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+
+
+                </div>
+            )}
             {tab === "dashboard" && (
                 <div>
                     <h2>전체 현황</h2>
-
-
 
                     <div
                         style={{
