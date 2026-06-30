@@ -6,14 +6,28 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+const DEFAULT_VOLUNTEER_GUIDE = `기본 사용 방법
+오늘 배달할 동을 눌러 주세요.
+주소와 도시락 수량을 확인한 뒤 배달해 주세요.
+배달을 마치면 완료 표시를 눌러 주세요.
+배달 중 문제가 있으면 경고 표시를 눌러 주세요.
+잘못 눌렀거나 수정이 필요하면 관리자에게 알려 주세요.
+
+버튼 안내
+□ 네모 박스: 배달 완료시 눌러 주세요. 체크 표시가 됩니다.
+⚠️ 노란색 경고: 배달 중 문제가 생겼을 때 눌러 주세요.
+📝 메모: 문제 내용은 동별 메모창에 남겨 주세요. 담당자가 즉시 확인할 수 있습니다.`;
+
 function App() {
   const [firebaseData, setFirebaseData] = useState({});
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [globalNotice, setGlobalNotice] = useState("");
+  const [volunteerGuide, setVolunteerGuide] = useState(DEFAULT_VOLUNTEER_GUIDE);
   const [buildings, setBuildings] = useState([]);
   const [hiddenBuildings, setHiddenBuildings] = useState([]);
   const [deliveryMemo, setDeliveryMemo] = useState("");
   const [memoSaveStatus, setMemoSaveStatus] = useState("");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const memoSaveTimer = useRef(null);
 
 
@@ -24,6 +38,22 @@ function App() {
       (docSnap) => {
         if (docSnap.exists()) {
           setGlobalNotice(docSnap.data().message);
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, "settings", "volunteerGuide"),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setVolunteerGuide(
+            docSnap.data().content || DEFAULT_VOLUNTEER_GUIDE
+          );
+        } else {
+          setVolunteerGuide(DEFAULT_VOLUNTEER_GUIDE);
         }
       }
     );
@@ -561,6 +591,69 @@ function App() {
       >
         🍱 도시락 배달 봉사
       </h1>
+
+      <div
+        style={{
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          type="button"
+          aria-expanded={isGuideOpen}
+          onClick={() => setIsGuideOpen((prev) => !prev)}
+          style={{
+            width: "100%",
+            minHeight: "52px",
+            border: "1px solid #9ca3af",
+            borderRadius: "10px",
+            backgroundColor: "#f9fafb",
+            color: "#111827",
+            fontSize: "18px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          {isGuideOpen ? "사용 안내 접기 ▲" : "사용 안내 보기 ▼"}
+        </button>
+
+        {isGuideOpen && (
+          <div
+            style={{
+              border: "1px solid #cbd5e1",
+              borderRadius: "10px",
+              padding: "14px",
+              marginTop: "10px",
+              backgroundColor: "#f8fafc",
+              fontSize: "16px",
+              lineHeight: 1.7,
+              color: "#111827",
+            }}
+          >
+            {volunteerGuide.split("\n").map((line, index) => {
+              const isHeading =
+                line === "기본 사용 방법" ||
+                line === "버튼 안내";
+
+              return (
+                <div
+                  key={`${line}-${index}`}
+                  style={{
+                    minHeight: line ? "auto" : "10px",
+                    fontWeight: isHeading ? "bold" : "normal",
+                    marginTop:
+                      isHeading && index > 0
+                        ? "14px"
+                        : 0,
+                    marginBottom: isHeading ? "6px" : 0,
+                  }}
+                >
+                  {line}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div
         style={{

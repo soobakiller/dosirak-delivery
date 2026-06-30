@@ -10,9 +10,22 @@ import {
     onSnapshot,
 } from "firebase/firestore";
 
+const DEFAULT_VOLUNTEER_GUIDE = `기본 사용 방법
+오늘 배달할 동을 눌러 주세요.
+주소와 도시락 수량을 확인한 뒤 배달해 주세요.
+배달을 마치면 완료 표시를 눌러 주세요.
+배달 중 문제가 있으면 경고 표시를 눌러 주세요.
+잘못 눌렀거나 수정이 필요하면 관리자에게 알려 주세요.
+
+버튼 안내
+□ 네모 박스: 배달 완료시 눌러 주세요. 체크 표시가 됩니다.
+⚠️ 노란색 경고: 배달 중 문제가 생겼을 때 눌러 주세요.
+📝 메모: 문제 내용은 동별 메모창에 남겨 주세요. 담당자가 즉시 확인할 수 있습니다.`;
+
 function Admin() {
 
     const [notice, setNotice] = useState("");
+    const [volunteerGuide, setVolunteerGuide] = useState(DEFAULT_VOLUNTEER_GUIDE);
     const [buildingNotice, setBuildingNotice] = useState("");
     const [selectedBuilding, setSelectedBuilding] = useState("409");
     const [buildingData, setBuildingData] = useState(null);
@@ -30,6 +43,54 @@ function Admin() {
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
     const [expandedIssues, setExpandedIssues] = useState(null);
+    const [dashboardSectionsOpen, setDashboardSectionsOpen] = useState({
+        status: true,
+        notice: false,
+        guide: false,
+        password: false,
+    });
+
+    function toggleDashboardSection(section) {
+        setDashboardSectionsOpen((prev) => ({
+            ...prev,
+            [section]: !prev[section],
+        }));
+    }
+
+    function renderDashboardSectionTitle(section, title, level = 3) {
+        const isOpen = dashboardSectionsOpen[section];
+
+        return (
+            <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => toggleDashboardSection(section)}
+                style={{
+                    width: "100%",
+                    minHeight: level === 2 ? "52px" : "46px",
+                    marginTop: level === 2 ? 0 : "16px",
+                    marginBottom: "10px",
+                    padding: "0 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    backgroundColor: "#f9fafb",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    fontSize: level === 2 ? "24px" : "20px",
+                    fontWeight: "bold",
+                    color: "#111827",
+                    boxSizing: "border-box",
+                }}
+            >
+                <span>{title}</span>
+                <span aria-hidden="true">
+                    {isOpen ? "▲" : "▼"}
+                </span>
+            </button>
+        );
+    }
 
     function isRoomPaused(room) {
         return room.paused === true;
@@ -135,6 +196,16 @@ function Admin() {
 
         alert("공지 저장 완료!");
     }
+    async function saveVolunteerGuide() {
+        await setDoc(
+            doc(db, "settings", "volunteerGuide"),
+            {
+                content: volunteerGuide,
+            }
+        );
+
+        alert("사용 안내 저장 완료!");
+    }
     useEffect(() => {
         async function loadNotice() {
             const docRef = doc(db, "notice", "all");
@@ -146,6 +217,21 @@ function Admin() {
         }
 
         loadNotice();
+    }, []);
+    useEffect(() => {
+        async function loadVolunteerGuide() {
+            const docSnap = await getDoc(
+                doc(db, "settings", "volunteerGuide")
+            );
+
+            if (docSnap.exists()) {
+                setVolunteerGuide(
+                    docSnap.data().content || DEFAULT_VOLUNTEER_GUIDE
+                );
+            }
+        }
+
+        loadVolunteerGuide();
     }, []);
     useEffect(() => {
         async function loadPassword() {
@@ -769,6 +855,20 @@ function Admin() {
 
     }, []);
 
+    function handleLogin() {
+        if (password === adminPassword) {
+
+            window.history.replaceState(
+                { tab: "dashboard" },
+                ""
+            );
+
+            setIsLoggedIn(true);
+        } else {
+            alert("비밀번호가 틀렸습니다.");
+        }
+    }
+
     if (!isLoggedIn) {
         return (
             <div
@@ -785,6 +885,11 @@ function Admin() {
                     placeholder="비밀번호"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            handleLogin();
+                        }
+                    }}
                     style={{
                         width: "100%",
                         height: "40px",
@@ -793,19 +898,7 @@ function Admin() {
                 />
 
                 <button
-                    onClick={() => {
-                        if (password === adminPassword) {
-
-                            window.history.replaceState(
-                                { tab: "dashboard" },
-                                ""
-                            );
-
-                            setIsLoggedIn(true);
-                        } else {
-                            alert("비밀번호가 틀렸습니다.");
-                        }
-                    }}
+                    onClick={handleLogin}
                     style={{
                         width: "100%",
                         height: "40px",
@@ -1257,15 +1350,17 @@ function Admin() {
             )}
             {tab === "dashboard" && (
                 <div>
-                    <h2>전체 현황</h2>
+                    {renderDashboardSectionTitle("status", "전체 현황", 2)}
 
-                    <div
-                        style={{
-                            padding: "10px",
-                            border: "1px solid gray",
-                            borderRadius: "10px",
-                        }}
-                    >
+                    {dashboardSectionsOpen.status && (
+                        <>
+                        <div
+                            style={{
+                                padding: "10px",
+                                border: "1px solid gray",
+                                borderRadius: "10px",
+                            }}
+                        >
                         <div>🍱 전체 도시락 : {totalLunch}</div>
                         <div>🥣 전체 국 : {totalSoup}</div>
                         <div>🌱 전체 로하스밀 : {totalLohas}</div>
@@ -1428,108 +1523,141 @@ function Admin() {
 
                             ))}
 
-                    </div >
+                        </div >
+
+                        <button
+                            onClick={resetAllDeliveryStatus}
+                            style={{
+                                width: "100%",
+                                height: "40px",
+                                marginTop: "10px",
+                                marginBottom: "20px",
+                                backgroundColor: "#aa3333",
+                            }}
+                        >
+                            전체 배달 현황 초기화
+                        </button>
+                        </>
+                    )}
 
 
+                    {renderDashboardSectionTitle("notice", "전체 공지")}
 
+                    {dashboardSectionsOpen.notice && (
+                        <>
+                        <textarea
+                            value={notice}
+                            onChange={(e) => setNotice(e.target.value)}
+                            style={{
+                                width: "100%",
+                                height: "100px",
+                            }}
+                        />
 
-                    <button
-                        onClick={resetAllDeliveryStatus}
-                        style={{
-                            width: "100%",
-                            height: "40px",
-                            marginTop: "10px",
-                            marginBottom: "20px",
-                            backgroundColor: "#aa3333",
-                        }}
-                    >
-                        전체 배달 현황 초기화
-                    </button>
+                        <button
+                            onClick={saveNotice}
+                            style={{
+                                marginTop: "10px",
+                                marginBottom: "20px",
+                            }}
+                        >
+                            공지 저장
+                        </button>
+                        </>
+                    )}
 
+                    {renderDashboardSectionTitle("guide", "사용 안내 수정")}
 
-                    <h3>전체 공지</h3>
+                    {dashboardSectionsOpen.guide && (
+                        <>
+                        <textarea
+                            value={volunteerGuide}
+                            onChange={(e) => setVolunteerGuide(e.target.value)}
+                            style={{
+                                width: "100%",
+                                height: "220px",
+                                boxSizing: "border-box",
+                                lineHeight: 1.5,
+                            }}
+                        />
 
-                    <textarea
-                        value={notice}
-                        onChange={(e) => setNotice(e.target.value)}
-                        style={{
-                            width: "100%",
-                            height: "100px",
-                        }}
-                    />
+                        <button
+                            onClick={saveVolunteerGuide}
+                            style={{
+                                marginTop: "10px",
+                                marginBottom: "20px",
+                            }}
+                        >
+                            사용 안내 저장
+                        </button>
+                        </>
+                    )}
 
-                    <button
-                        onClick={saveNotice}
-                        style={{
-                            marginTop: "10px",
-                            marginBottom: "20px",
-                        }}
-                    >
-                        공지 저장
-                    </button>
+                    {renderDashboardSectionTitle("password", "비밀번호 변경")}
 
-                    <hr style={{ marginTop: "20px" }} />
-
-                    <h3>비밀번호 변경</h3>
-                    <input
-                        type="password"
-                        placeholder="현재 비밀번호"
-                        value={currentPassword}
-                        onChange={(e) =>
-                            setCurrentPassword(e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            height: "40px",
-                            marginBottom: "10px",
-                        }}
-                    />
-
-                    <input
-                        type="password"
-                        placeholder="새 비밀번호"
-                        value={newPassword}
-                        onChange={(e) =>
-                            setNewPassword(e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            height: "40px",
-                            marginBottom: "10px",
-                        }}
-                    />
-
-                    <button
-                        onClick={async () => {
-                            if (currentPassword !== adminPassword) {
-                                alert("현재 비밀번호가 틀렸습니다.");
-                                return;
+                    {dashboardSectionsOpen.password && (
+                        <>
+                        <input
+                            type="password"
+                            placeholder="현재 비밀번호"
+                            value={currentPassword}
+                            onChange={(e) =>
+                                setCurrentPassword(e.target.value)
                             }
-                            if (!newPassword.trim()) {
-                                alert("비밀번호를 입력하세요.");
-                                return;
-                            }
+                            style={{
+                                width: "100%",
+                                height: "40px",
+                                marginBottom: "10px",
+                            }}
+                        />
 
-                            await setDoc(
-                                doc(db, "settings", "admin"),
-                                {
-                                    password: newPassword,
+                        <input
+                            type="password"
+                            placeholder="새 비밀번호"
+                            value={newPassword}
+                            onChange={(e) =>
+                                setNewPassword(e.target.value)
+                            }
+                            style={{
+                                width: "100%",
+                                height: "40px",
+                                marginBottom: "10px",
+                            }}
+                        />
+
+                        <button
+                            onClick={async () => {
+                                if (currentPassword !== adminPassword) {
+                                    alert("현재 비밀번호가 틀렸습니다.");
+                                    return;
                                 }
-                            );
+                                if (!newPassword.trim()) {
+                                    alert("비밀번호를 입력하세요.");
+                                    return;
+                                }
 
-                            setAdminPassword(newPassword);
-                            setNewPassword("");
-                            setCurrentPassword("");
+                                await setDoc(
+                                    doc(db, "settings", "admin"),
+                                    {
+                                        password: newPassword,
+                                    }
+                                );
 
-                            alert("비밀번호 변경 완료!");
-                        }}
-                        style={{
-                            width: "100%",
-                            height: "40px",
-                        }}
-                    >
-                        비밀번호 변경
-                    </button>
+                                setAdminPassword(newPassword);
+                                setNewPassword("");
+                                setCurrentPassword("");
+
+                                alert("비밀번호 변경 완료!");
+                            }}
+                            style={{
+                                width: "100%",
+                                height: "40px",
+                            }}
+                        >
+                            비밀번호 변경
+                        </button>
+                        </>
+                    )}
 
                 </div>
             )}
