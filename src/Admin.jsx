@@ -43,6 +43,7 @@ function Admin() {
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
     const [expandedIssues, setExpandedIssues] = useState(null);
+    const [liveViewMode, setLiveViewMode] = useState("expanded");
     const [dashboardSectionsOpen, setDashboardSectionsOpen] = useState({
         status: true,
         notice: false,
@@ -1172,12 +1173,202 @@ function Admin() {
 
                     <div
                         style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                            gap: "14px",
-                            marginBottom: "16px",
+                            display: "flex",
+                            gap: "8px",
+                            marginBottom: "14px",
                         }}
                     >
+                        {[
+                            ["expanded", "펼쳐보기"],
+                            ["compact", "모아보기"],
+                        ].map(([mode, label]) => {
+                            const isActive = liveViewMode === mode;
+
+                            return (
+                                <button
+                                    key={mode}
+                                    type="button"
+                                    onClick={() => setLiveViewMode(mode)}
+                                    style={{
+                                        flex: "1 1 0",
+                                        minHeight: "40px",
+                                        border: isActive
+                                            ? "2px solid #0f6b99"
+                                            : "1px solid #d1d5db",
+                                        borderRadius: "8px",
+                                        backgroundColor: isActive
+                                            ? "#e0f2fe"
+                                            : "#ffffff",
+                                        color: isActive
+                                            ? "#075985"
+                                            : "#374151",
+                                        fontWeight: "bold",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {liveViewMode === "compact" ? (
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                                gap: "10px",
+                                marginBottom: "16px",
+                            }}
+                        >
+                            {visibleDashboardBuildings.map((building) => {
+                                const status =
+                                    visibleBuildingStatus.find(
+                                        (item) => item.id === building.id
+                                    ) || {
+                                        checked: 0,
+                                        total: 0,
+                                        issues: 0,
+                                        hasDeliveryMemo: false,
+                                    };
+                                const rooms = [...(building.rooms || [])]
+                                    .map(normalizeRoom)
+                                    .filter((room) => !isRoomPaused(room))
+                                    .sort(
+                                        (a, b) =>
+                                            parseInt(a.room) - parseInt(b.room)
+                                    );
+
+                                return (
+                                    <div
+                                        key={building.id}
+                                        style={{
+                                            minWidth: 0,
+                                            border: status.issues > 0
+                                                ? "2px solid #fecdd3"
+                                                : "1px solid #d1d5db",
+                                            borderRadius: "8px",
+                                            padding: "8px",
+                                            backgroundColor: "#ffffff",
+                                            boxSizing: "border-box",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                gap: "6px",
+                                                marginBottom: "8px",
+                                            }}
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() => openBuilding(building.id)}
+                                                style={{
+                                                    minWidth: 0,
+                                                    padding: 0,
+                                                    border: "none",
+                                                    background: "transparent",
+                                                    color: "#111827",
+                                                    fontSize: "16px",
+                                                    fontWeight: "bold",
+                                                    cursor: "pointer",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {building.id}동
+                                            </button>
+                                            <span
+                                                style={{
+                                                    flex: "0 0 auto",
+                                                    color: status.checked === status.total
+                                                        ? "#15803d"
+                                                        : "#4b5563",
+                                                    fontSize: "12px",
+                                                    fontWeight: "bold",
+                                                    fontVariantNumeric: "tabular-nums",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {status.checked}/{status.total}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                display: "grid",
+                                                gridTemplateColumns:
+                                                    "repeat(3, minmax(0, 1fr))",
+                                                gap: "4px",
+                                            }}
+                                        >
+                                            {rooms.map((room) => (
+                                                <button
+                                                    key={room.id}
+                                                    type="button"
+                                                    title={`${building.id}동 ${room.room}`}
+                                                    onClick={() => openBuilding(building.id)}
+                                                    style={{
+                                                        minWidth: 0,
+                                                        height: "28px",
+                                                        padding: "0 4px",
+                                                        border: room.checked
+                                                            ? "1px solid #16a34a"
+                                                            : "1px solid #d1d5db",
+                                                        borderRadius: "4px",
+                                                        backgroundColor: room.checked
+                                                            ? "#ecfdf5"
+                                                            : "#ffffff",
+                                                        color: "#111827",
+                                                        display: "grid",
+                                                        gridTemplateColumns: "1fr 14px",
+                                                        alignItems: "center",
+                                                        gap: "2px",
+                                                        cursor: "pointer",
+                                                        fontSize: "12px",
+                                                        fontWeight: "bold",
+                                                        boxSizing: "border-box",
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            overflow: "hidden",
+                                                            textOverflow: "ellipsis",
+                                                            whiteSpace: "nowrap",
+                                                            textAlign: "left",
+                                                        }}
+                                                    >
+                                                        {room.room}
+                                                    </span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        style={{
+                                                            color: "#15803d",
+                                                            textAlign: "center",
+                                                            lineHeight: 1,
+                                                        }}
+                                                    >
+                                                        {room.checked ? "✓" : ""}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                                gap: "14px",
+                                marginBottom: "16px",
+                            }}
+                        >
                         {visibleDashboardBuildings.map((building) => {
                             const status =
                                 visibleBuildingStatus.find(
@@ -1376,7 +1567,8 @@ function Admin() {
                                 </div>
                             );
                         })}
-                    </div>
+                        </div>
+                    )}
 
 
 
