@@ -168,12 +168,43 @@ function App() {
     return {
       checked: false,
       ...room,
+      mealCount: getRoomMealCount(room),
       paused: room.paused === true,
     };
   }
 
+  function getRoomMealCount(room) {
+    return Number(room?.mealCount) === 2 ? 2 : 1;
+  }
+
+  function getMealCountsFromRooms(rooms) {
+    return rooms
+      .filter((room) => !room.paused)
+      .reduce(
+        (counts, room) => {
+          const mealCount = getRoomMealCount(room);
+
+          return {
+            lunch: counts.lunch + mealCount,
+            soup:
+              counts.soup +
+              (room.soupExcluded ? 0 : mealCount),
+            lohas:
+              counts.lohas +
+              (room.lohasExcluded ? 0 : mealCount),
+          };
+        },
+        {
+          lunch: 0,
+          soup: 0,
+          lohas: 0,
+        }
+      );
+  }
+
   function hasRoomHighlight(item) {
     return Boolean(
+      getRoomMealCount(item) > 1 ||
       item.soupExcluded ||
       item.lohasExcluded ||
       item.specialRequest ||
@@ -188,26 +219,11 @@ function App() {
       (a, b) =>
         parseInt(a.room) - parseInt(b.room)
     );
-  const pausedRooms = allRooms.filter((room) => room.paused);
+  const mealCounts = getMealCountsFromRooms(allRooms);
   const currentData = {
-    lunch: Math.max(
-      (selectedData.lunch || 0) - pausedRooms.length,
-      0
-    ),
-    soup: Math.max(
-      (selectedData.soup || 0) -
-      pausedRooms.filter(
-        (room) => !room.soupExcluded
-      ).length,
-      0
-    ),
-    lohas: Math.max(
-      (selectedData.lohas || 0) -
-      pausedRooms.filter(
-        (room) => !room.lohasExcluded
-      ).length,
-      0
-    ),
+    lunch: mealCounts.lunch,
+    soup: mealCounts.soup,
+    lohas: mealCounts.lohas,
     list: allRooms.filter((room) => !room.paused),
     allRooms,
     notice: selectedData.notice || "",
@@ -540,6 +556,10 @@ function App() {
 
               {item.lohasExcluded && (
                 <div>🌱 로하스밀X</div>
+              )}
+
+              {getRoomMealCount(item) > 1 && (
+                <div>🍱 {getRoomMealCount(item)}인분</div>
               )}
 
               {item.specialRequest && (

@@ -22,6 +22,8 @@ const DEFAULT_VOLUNTEER_GUIDE = `기본 사용 방법
 ⚠️ 노란색 경고: 배달 중 문제가 생겼을 때 눌러 주세요.
 📝 메모: 문제 내용은 동별 메모창에 남겨 주세요. 담당자가 즉시 확인할 수 있습니다.`;
 
+const TWO_SERVINGS_MEMO = "2인분 배달";
+
 function Admin() {
 
     const [notice, setNotice] = useState("");
@@ -101,36 +103,43 @@ function Admin() {
         return {
             checked: false,
             ...room,
+            mealCount: getRoomMealCount(room),
             paused: room.paused === true,
         };
     }
 
-    function getEffectiveMealCounts(building) {
-        const rooms = building.rooms || [];
-        const pausedRooms = rooms.filter(
-            isRoomPaused
-        );
+    function getRoomMealCount(room) {
+        return Number(room?.mealCount) === 2 ? 2 : 1;
+    }
 
-        return {
-            lunch: Math.max(
-                (building.lunch || 0) - pausedRooms.length,
-                0
-            ),
-            soup: Math.max(
-                (building.soup || 0) -
-                pausedRooms.filter(
-                    (room) => !room.soupExcluded
-                ).length,
-                0
-            ),
-            lohas: Math.max(
-                (building.lohas || 0) -
-                pausedRooms.filter(
-                    (room) => !room.lohasExcluded
-                ).length,
-                0
-            ),
-        };
+    function getMealCountsFromRooms(rooms) {
+        return (rooms || [])
+            .map(normalizeRoom)
+            .filter((room) => !isRoomPaused(room))
+            .reduce(
+                (counts, room) => {
+                    const mealCount = getRoomMealCount(room);
+
+                    return {
+                        lunch: counts.lunch + mealCount,
+                        soup:
+                            counts.soup +
+                            (room.soupExcluded ? 0 : mealCount),
+                        lohas:
+                            counts.lohas +
+                            (room.lohasExcluded ? 0 : mealCount),
+                    };
+                },
+                {
+                    lunch: 0,
+                    soup: 0,
+                    lohas: 0,
+                }
+            );
+    }
+
+    function getEffectiveMealCounts(building) {
+        return getMealCountsFromRooms(building.rooms || []);
     }
 
     const dashboardSourceData = useMemo(() => {
@@ -379,7 +388,6 @@ function Admin() {
                 (item) => item.id === building.id
             );
             const liveRooms = liveBuilding?.rooms || [];
-            const effectiveMealCounts = getEffectiveMealCounts(building);
 
             return {
                 id: building.id,
@@ -396,7 +404,7 @@ function Admin() {
                         }
                     ).length,
                 total:
-                    effectiveMealCounts.lunch,
+                    activeRooms.length,
 
                 issues:
                     activeRooms.filter(
@@ -491,28 +499,13 @@ function Admin() {
     }, [dashboardSourceData, expandedIssues]);
 
     function syncMealCountsWithRooms(data, nextRooms) {
-        const prevRooms = data.rooms || [];
-        const previousCount = prevRooms.length;
-        const nextCount = nextRooms.length;
-        const nextLunch = Math.max(
-            data.lunch === previousCount
-                ? nextCount
-                : (data.lunch ?? nextCount),
-            nextCount
-        );
+        const normalizedRooms = nextRooms.map(normalizeRoom);
+        const mealCounts = getMealCountsFromRooms(normalizedRooms);
 
         return {
             ...data,
-            lunch: nextLunch,
-            soup:
-                data.soup === previousCount
-                    ? nextCount
-                    : (data.soup ?? nextCount),
-            lohas:
-                data.lohas === previousCount
-                    ? nextCount
-                    : (data.lohas ?? nextCount),
-            rooms: nextRooms,
+            ...mealCounts,
+            rooms: normalizedRooms,
         };
     }
 
@@ -579,17 +572,19 @@ function Admin() {
 
             const rooms = (data.rooms || []).map(
                 (room) => ({
-                    ...room,
+                    ...normalizeRoom(room),
                     checked: false,
                     issue: false,
                     paused: false,
                 })
             );
+            const mealCounts = getMealCountsFromRooms(rooms);
 
             await updateDoc(
                 doc(db, "buildings", buildingId),
                 {
                     rooms,
+                    ...mealCounts,
                     deliveryMemo: "",
                 }
             );
@@ -609,6 +604,7 @@ function Admin() {
             id: Date.now(),
             room: roomName,
             memo: "",
+            mealCount: 1,
             soupExcluded: false,
             lohasExcluded: false,
             specialRequest: "",
@@ -637,6 +633,44 @@ function Admin() {
             )
         );
         setIsDirty(true);
+    }
+
+    function updateRoomsWithMealCounts(nextRooms) {
+        setEditData(
+            syncMealCountsWithRooms(
+                editData,
+                nextRooms
+            )
+        );
+        setIsDirty(true);
+    }
+
+    function toggleTwoServings(roomId) {
+        updateRoomsWithMealCounts(
+            editData.rooms.map((room) => {
+                if (room.id !== roomId) {
+                    return room;
+                }
+
+                const isTwoServings = getRoomMealCount(room) === 2;
+                const memoLines = (room.memo || "")
+                    .split("\n")
+                    .filter(
+                        (line) =>
+                            line.trim() &&
+                            line.trim() !== TWO_SERVINGS_MEMO
+                    );
+                const nextMemo = isTwoServings
+                    ? memoLines.join("\n")
+                    : [...memoLines, TWO_SERVINGS_MEMO].join("\n");
+
+                return {
+                    ...room,
+                    mealCount: isTwoServings ? 1 : 2,
+                    memo: nextMemo,
+                };
+            })
+        );
     }
     async function addBuilding() {
 
@@ -2032,17 +2066,8 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.lunch || 0}
-                                    onChange={(e) => {
-                                        setEditData({
-                                            ...editData,
-                                            lunch: Math.max(
-                                                Number(e.target.value),
-                                                editData.rooms.length
-                                            ),
-                                        });
-                                        setIsDirty(true);
-                                    }}
-                                    style={{ width: "80px", marginLeft: "10px" }}
+                                    readOnly
+                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
                                 />
                             </div>
                             <div>
@@ -2050,14 +2075,8 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.soup || 0}
-                                    onChange={(e) => {
-                                        setEditData({
-                                            ...editData,
-                                            soup: Number(e.target.value),
-                                        });
-                                        setIsDirty(true);
-                                    }}
-                                    style={{ width: "80px", marginLeft: "10px" }}
+                                    readOnly
+                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
                                 />
                             </div>
                             <div>
@@ -2065,14 +2084,8 @@ function Admin() {
                                 <input
                                     type="number"
                                     value={editData?.lohas || 0}
-                                    onChange={(e) => {
-                                        setEditData({
-                                            ...editData,
-                                            lohas: Number(e.target.value),
-                                        });
-                                        setIsDirty(true);
-                                    }}
-                                    style={{ width: "80px", marginLeft: "10px" }}
+                                    readOnly
+                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
                                 />
                             </div>
                             <div>🏠 호수 수 : {editData?.rooms.length}</div>
@@ -2147,10 +2160,8 @@ function Admin() {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-
-                                                        setEditData({
-                                                            ...editData,
-                                                            rooms: editData.rooms.map((r) =>
+                                                        updateRoomsWithMealCounts(
+                                                            editData.rooms.map((r) =>
                                                                 r.id === room.id
                                                                     ? {
                                                                         ...r,
@@ -2158,10 +2169,8 @@ function Admin() {
                                                                             !r.soupExcluded,
                                                                     }
                                                                     : r
-                                                            ),
-                                                        });
-
-                                                        setIsDirty(true);
+                                                            )
+                                                        );
                                                     }}
                                                 >
                                                     {room.soupExcluded
@@ -2172,10 +2181,8 @@ function Admin() {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-
-                                                        setEditData({
-                                                            ...editData,
-                                                            rooms: editData.rooms.map((r) =>
+                                                        updateRoomsWithMealCounts(
+                                                            editData.rooms.map((r) =>
                                                                 r.id === room.id
                                                                     ? {
                                                                         ...r,
@@ -2183,15 +2190,29 @@ function Admin() {
                                                                             !r.lohasExcluded,
                                                                     }
                                                                     : r
-                                                            ),
-                                                        });
-
-                                                        setIsDirty(true);
+                                                            )
+                                                        );
                                                     }}
                                                 >
                                                     {room.lohasExcluded
                                                         ? "🌱 로하스밀X ✓"
                                                         : "🌱 로하스밀X"}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleTwoServings(room.id)}
+                                                    style={{
+                                                        backgroundColor:
+                                                            getRoomMealCount(room) === 2
+                                                                ? "#fde68a"
+                                                                : "#f3f4f6",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    {getRoomMealCount(room) === 2
+                                                        ? "🍱 2인분 ✓"
+                                                        : "🍱 2인분"}
                                                 </button>
 
                                                 <select
@@ -2299,9 +2320,8 @@ function Admin() {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setEditData({
-                                                    ...editData,
-                                                    rooms: editData.rooms.map((r) =>
+                                                updateRoomsWithMealCounts(
+                                                    editData.rooms.map((r) =>
                                                         r.id === room.id
                                                             ? {
                                                                 ...r,
@@ -2312,10 +2332,8 @@ function Admin() {
                                                                         : r.checked,
                                                             }
                                                             : r
-                                                    ),
-                                                });
-
-                                                setIsDirty(true);
+                                                    )
+                                                );
                                             }}
                                             style={{
                                                 minWidth: "64px",
