@@ -2062,31 +2062,13 @@ function Admin() {
                             />
 
                             <div>
-                                🍱 도시락 :
-                                <input
-                                    type="number"
-                                    value={editData?.lunch || 0}
-                                    readOnly
-                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
-                                />
+                                🍱 도시락 : {editData?.lunch || 0}
                             </div>
                             <div>
-                                🥣 국 :
-                                <input
-                                    type="number"
-                                    value={editData?.soup || 0}
-                                    readOnly
-                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
-                                />
+                                🥣 국 : {editData?.soup || 0}
                             </div>
                             <div>
-                                🌱 로하스밀 :
-                                <input
-                                    type="number"
-                                    value={editData?.lohas || 0}
-                                    readOnly
-                                    style={{ width: "80px", marginLeft: "10px", backgroundColor: "#f3f4f6" }}
-                                />
+                                🌱 로하스밀 : {editData?.lohas || 0}
                             </div>
                             <div>🏠 호수 수 : {editData?.rooms.length}</div>
                             <div
@@ -2202,13 +2184,6 @@ function Admin() {
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleTwoServings(room.id)}
-                                                    style={{
-                                                        backgroundColor:
-                                                            getRoomMealCount(room) === 2
-                                                                ? "#fde68a"
-                                                                : "#f3f4f6",
-                                                        fontWeight: "bold",
-                                                    }}
                                                 >
                                                     {getRoomMealCount(room) === 2
                                                         ? "🍱 2인분 ✓"
