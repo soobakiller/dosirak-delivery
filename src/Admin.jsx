@@ -182,6 +182,15 @@ function Admin() {
         {}
     );
 
+    const visibleDashboardSourceData = useMemo(
+        () =>
+            dashboardSourceData.filter(
+                (building) =>
+                    !hiddenBuildings.includes(building.id)
+            ),
+        [dashboardSourceData, hiddenBuildings]
+    );
+
 
 
 
@@ -342,25 +351,25 @@ function Admin() {
 
     }, []);
 
-    const totalLunch = dashboardSourceData.reduce(
+    const totalLunch = visibleDashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).lunch,
         0
     );
 
-    const totalSoup = dashboardSourceData.reduce(
+    const totalSoup = visibleDashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).soup,
         0
     );
 
-    const totalLohas = dashboardSourceData.reduce(
+    const totalLohas = visibleDashboardSourceData.reduce(
         (sum, building) =>
             sum + getEffectiveMealCounts(building).lohas,
         0
     );
 
-    const buildingStatus = dashboardSourceData.map(
+    const buildingStatus = visibleDashboardSourceData.map(
         (building) => {
             const activeRooms = (building.rooms || []).filter(
                 (room) => !isRoomPaused(room)
@@ -409,17 +418,9 @@ function Admin() {
     );
 
     const visibleBuildingStatus = buildingStatus
-        .filter(
-            (building) =>
-                !hiddenBuildings.includes(building.id)
-        )
         .sort((a, b) => a.id.localeCompare(b.id, "ko"));
 
-    const visibleDashboardBuildings = dashboardSourceData
-        .filter(
-            (building) =>
-                !hiddenBuildings.includes(building.id)
-        )
+    const visibleDashboardBuildings = visibleDashboardSourceData
         .sort((a, b) => a.id.localeCompare(b.id, "ko"));
 
     const totalIssueRooms = visibleBuildingStatus.reduce(
@@ -1073,7 +1074,7 @@ function Admin() {
                     <div
                         style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                             gap: "8px",
                             padding: "12px",
                             border: "1px solid #d1d5db",
@@ -1082,9 +1083,42 @@ function Admin() {
                             backgroundColor: "#f9fafb",
                         }}
                     >
-                        <div>🍱 전체 도시락 : {totalLunch}</div>
-                        <div>🥣 전체 국 : {totalSoup}</div>
-                        <div>🌱 전체 로하스밀 : {totalLohas}</div>
+                        {[
+                            ["🍱 전체 도시락", totalLunch],
+                            ["🥣 전체 국", totalSoup],
+                            ["🌱 전체 로하스밀", totalLohas],
+                        ].map(([label, value]) => (
+                            <div
+                                key={label}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "8px",
+                                    minWidth: 0,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        minWidth: 0,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    {label}
+                                </span>
+                                <span
+                                    style={{
+                                        flex: "0 0 auto",
+                                        fontVariantNumeric: "tabular-nums",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    {value}
+                                </span>
+                            </div>
+                        ))}
                     </div>
 
                     {liveIssueList.length > 0 && (
