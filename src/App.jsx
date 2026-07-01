@@ -229,6 +229,10 @@ function App() {
     notice: selectedData.notice || "",
     deliveryMemo: selectedData.deliveryMemo || "",
   };
+  const checkedRoomCount = currentData.list.filter(
+    (room) => room.checked
+  ).length;
+  const totalRoomCount = currentData.list.length;
   useEffect(() => {
     setDeliveryMemo(currentData.deliveryMemo);
   }, [selectedBuilding, currentData.deliveryMemo]);
@@ -368,6 +372,7 @@ function App() {
           <div>🍱 도시락 : {currentData.lunch}개</div>
           <div>🥣 국 : {currentData.soup}개</div>
           <div>🌱 로하스밀 : {currentData.lohas}개</div>
+          <div>☑ 완료 : {checkedRoomCount}/{totalRoomCount}</div>
         </div>
 
         <div
