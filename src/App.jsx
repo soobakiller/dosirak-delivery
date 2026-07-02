@@ -605,6 +605,19 @@ function App() {
         padding: "20px",
       }}
     >
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: "17px",
+          fontWeight: "700",
+          color: "#374151",
+          marginTop: "8px",
+          marginBottom: "8px",
+        }}
+      >
+        고양시흰돌종합사회복지관
+      </div>
+
       <h1
         style={{
           textAlign: "center",
