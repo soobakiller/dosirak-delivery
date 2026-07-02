@@ -2173,7 +2173,7 @@ function Admin() {
                                                     onClick={() => toggleTwoServings(room.id)}
                                                 >
                                                     {getRoomMealCount(room) === 2
-                                                        ? "🍱 2인분 ✓"
+                                                        ? "🍱 2인분 제공 ✓"
                                                         : "🍱 2인분"}
                                                 </button>
 

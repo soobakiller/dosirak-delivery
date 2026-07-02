@@ -570,7 +570,7 @@ function App() {
               )}
 
               {getRoomMealCount(item) > 1 && (
-                <div>🍱 {getRoomMealCount(item)}인분</div>
+                <div>🍱 {getRoomMealCount(item)}인분 제공</div>
               )}
 
               {item.specialRequest && (
