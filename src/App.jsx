@@ -555,6 +555,12 @@ function App() {
               }}
             >
 
+              {item.issue && (
+                <div>
+                  🚨 관리자 확인 필요
+                </div>
+              )}
+
               {item.soupExcluded && (
                 <div>🥣 국X</div>
               )}
@@ -570,12 +576,6 @@ function App() {
               {item.specialRequest && (
                 <div>
                   🍱 {item.specialRequest}
-                </div>
-              )}
-
-              {item.issue && (
-                <div>
-                  🚨 관리자 확인 필요
                 </div>
               )}
 

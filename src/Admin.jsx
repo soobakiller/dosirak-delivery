@@ -22,8 +22,6 @@ const DEFAULT_VOLUNTEER_GUIDE = `기본 사용 방법
 ⚠️ 노란색 경고: 배달 중 문제가 생겼을 때 눌러 주세요.
 📝 메모: 문제 내용은 동별 메모창에 남겨 주세요. 담당자가 즉시 확인할 수 있습니다.`;
 
-const TWO_SERVINGS_MEMO = "2인분 배달";
-
 function Admin() {
 
     const [notice, setNotice] = useState("");
@@ -653,21 +651,10 @@ function Admin() {
                 }
 
                 const isTwoServings = getRoomMealCount(room) === 2;
-                const memoLines = (room.memo || "")
-                    .split("\n")
-                    .filter(
-                        (line) =>
-                            line.trim() &&
-                            line.trim() !== TWO_SERVINGS_MEMO
-                    );
-                const nextMemo = isTwoServings
-                    ? memoLines.join("\n")
-                    : [...memoLines, TWO_SERVINGS_MEMO].join("\n");
 
                 return {
                     ...room,
                     mealCount: isTwoServings ? 1 : 2,
-                    memo: nextMemo,
                 };
             })
         );
