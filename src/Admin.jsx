@@ -573,7 +573,6 @@ function Admin() {
                     ...normalizeRoom(room),
                     checked: false,
                     issue: false,
-                    paused: false,
                 })
             );
             const mealCounts = getMealCountsFromRooms(rooms);
