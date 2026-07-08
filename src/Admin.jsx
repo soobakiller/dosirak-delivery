@@ -632,14 +632,40 @@ function Admin() {
         setIsDirty(true);
     }
 
-    function updateRoomsWithMealCounts(nextRooms) {
-        setEditData(
-            syncMealCountsWithRooms(
-                editData,
-                nextRooms
-            )
+    async function saveRoomChangesImmediately(nextData) {
+        await setDoc(
+            doc(db, "buildings", selectedBuilding),
+            {
+                ...nextData,
+                notice: buildingNotice,
+                deliveryMemo: buildingData?.deliveryMemo || "",
+            }
         );
+
+        setBuildingData({
+            ...nextData,
+            deliveryMemo: buildingData?.deliveryMemo || "",
+        });
+    }
+
+    async function updateRoomsWithMealCounts(nextRooms, saveImmediately = false) {
+        const nextData = syncMealCountsWithRooms(
+            editData,
+            nextRooms
+        );
+
+        setEditData(nextData);
         setIsDirty(true);
+
+        if (!saveImmediately) return;
+
+        try {
+            await saveRoomChangesImmediately(nextData);
+            setIsDirty(false);
+        } catch (error) {
+            console.error(error);
+            alert("변경사항 자동 저장에 실패했습니다. 저장 버튼을 눌러 다시 저장해주세요.");
+        }
     }
 
     function toggleTwoServings(roomId) {
@@ -655,7 +681,8 @@ function Admin() {
                     ...room,
                     mealCount: isTwoServings ? 1 : 2,
                 };
-            })
+            }),
+            true
         );
     }
     async function addBuilding() {
@@ -2137,7 +2164,8 @@ function Admin() {
                                                                             !r.soupExcluded,
                                                                     }
                                                                     : r
-                                                            )
+                                                            ),
+                                                            true
                                                         );
                                                     }}
                                                 >
@@ -2158,7 +2186,8 @@ function Admin() {
                                                                             !r.lohasExcluded,
                                                                     }
                                                                     : r
-                                                            )
+                                                            ),
+                                                            true
                                                         );
                                                     }}
                                                 >
@@ -2179,10 +2208,8 @@ function Admin() {
                                                 <select
                                                     value={room.specialRequest || ""}
                                                     onChange={(e) => {
-
-                                                        setEditData({
-                                                            ...editData,
-                                                            rooms: editData.rooms.map((r) =>
+                                                        updateRoomsWithMealCounts(
+                                                            editData.rooms.map((r) =>
                                                                 r.id === room.id
                                                                     ? {
                                                                         ...r,
@@ -2191,9 +2218,8 @@ function Admin() {
                                                                     }
                                                                     : r
                                                             ),
-                                                        });
-
-                                                        setIsDirty(true);
+                                                            true
+                                                        );
                                                     }}
                                                     style={{
                                                         flex: "1 1 130px",
