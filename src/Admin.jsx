@@ -43,6 +43,7 @@ function Admin() {
     const [hiddenBuildings, setHiddenBuildings] = useState([]);
     const [isDirty, setIsDirty] = useState(false);
     const [expandedIssues, setExpandedIssues] = useState(null);
+    const [expandedHiddenBuilding, setExpandedHiddenBuilding] = useState(null);
     const [liveViewMode, setLiveViewMode] = useState("expanded");
     const [dashboardSectionsOpen, setDashboardSectionsOpen] = useState({
         status: true,
@@ -777,6 +778,9 @@ function Admin() {
         );
 
         setHiddenBuildings(updatedHidden);
+        setExpandedHiddenBuilding((current) =>
+            current === buildingId ? null : current
+        );
 
         alert(`${buildingId} 복구 완료`);
     }
@@ -820,6 +824,9 @@ function Admin() {
 
         setBuildings(updatedBuildings);
         setHiddenBuildings(updatedHidden);
+        setExpandedHiddenBuilding((current) =>
+            current === buildingId ? null : current
+        );
 
         alert(`${buildingId} 삭제 완료`);
     }
@@ -2421,50 +2428,100 @@ function Admin() {
                         <p>숨겨진 동이 없습니다.</p>
                     )}
 
-                    {hiddenBuildings.map((building) => (
+                    {hiddenBuildings.map((building) => {
+                        const hiddenBuildingData = dashboardData.find(
+                            (item) => item.id === building
+                        );
+                        const hiddenMealCounts = getEffectiveMealCounts(
+                            hiddenBuildingData || { rooms: [] }
+                        );
+                        const hiddenRoomCount = (
+                            hiddenBuildingData?.rooms || []
+                        ).filter((room) => !isRoomPaused(room)).length;
+                        const isDetailOpen =
+                            expandedHiddenBuilding === building;
 
-                        <div
-                            key={building}
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: "10px",
-                                padding: "10px",
-                                border: "1px solid gray",
-                                borderRadius: "5px",
-                            }}
-                        >
-                            <span>{building}동</span>
-
+                        return (
                             <div
+                                key={building}
                                 style={{
-                                    display: "flex",
-                                    gap: "5px",
+                                    marginBottom: "10px",
+                                    padding: "10px",
+                                    border: "1px solid gray",
+                                    borderRadius: "5px",
                                 }}
                             >
-                                <button
-                                    onClick={() =>
-                                        restoreBuilding(building)
-                                    }
-                                >
-                                    복구
-                                </button>
-
-                                <button
-                                    onClick={() =>
-                                        deleteBuilding(building)
-                                    }
+                                <div
                                     style={{
-                                        backgroundColor: "#aa3333",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        gap: "10px",
                                     }}
                                 >
-                                    삭제
-                                </button>
+                                    <span>{building}동</span>
+
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: "5px",
+                                        }}
+                                    >
+                                        <button
+                                            onClick={() =>
+                                                setExpandedHiddenBuilding(
+                                                    isDetailOpen
+                                                        ? null
+                                                        : building
+                                                )
+                                            }
+                                        >
+                                            {isDetailOpen
+                                                ? "닫기"
+                                                : "자세히 보기"}
+                                        </button>
+
+                                        <button
+                                            onClick={() =>
+                                                restoreBuilding(building)
+                                            }
+                                        >
+                                            복구
+                                        </button>
+
+                                        <button
+                                            onClick={() =>
+                                                deleteBuilding(building)
+                                            }
+                                            style={{
+                                                backgroundColor: "#aa3333",
+                                            }}
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {isDetailOpen && (
+                                    <div
+                                        style={{
+                                            marginTop: "10px",
+                                            paddingTop: "10px",
+                                            borderTop: "1px solid #ddd",
+                                            color: "#4b3f6b",
+                                            fontSize: "18px",
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        <div>🍱 도시락 : {hiddenMealCounts.lunch}</div>
+                                        <div>🥣 국 : {hiddenMealCounts.soup}</div>
+                                        <div>🌱 로하스밀 : {hiddenMealCounts.lohas}</div>
+                                        <div>🏠 호수 수 : {hiddenRoomCount}</div>
+                                    </div>
+                                )}
                             </div>
-
-                        </div>
-
-                    ))}
+                        );
+                    })}
 
                 </div>
             )}
