@@ -177,9 +177,12 @@ function App() {
     return Number(room?.mealCount) === 2 ? 2 : 1;
   }
 
+  function getActiveRooms(rooms) {
+    return (rooms || []).filter((room) => !room.paused);
+  }
+
   function getMealCountsFromRooms(rooms) {
-    return rooms
-      .filter((room) => !room.paused)
+    return getActiveRooms(rooms)
       .reduce(
         (counts, room) => {
           const mealCount = getRoomMealCount(room);
@@ -224,15 +227,17 @@ function App() {
     lunch: mealCounts.lunch,
     soup: mealCounts.soup,
     lohas: mealCounts.lohas,
-    list: allRooms.filter((room) => !room.paused),
+    list: getActiveRooms(allRooms),
     allRooms,
     notice: selectedData.notice || "",
     deliveryMemo: selectedData.deliveryMemo || "",
   };
-  const checkedRoomCount = currentData.list.filter(
-    (room) => room.checked
-  ).length;
-  const totalRoomCount = currentData.list.length;
+  const checkedMealCount = currentData.list.reduce(
+    (sum, room) =>
+      room.checked ? sum + getRoomMealCount(room) : sum,
+    0
+  );
+  const totalMealCount = currentData.lunch;
   useEffect(() => {
     setDeliveryMemo(currentData.deliveryMemo);
   }, [selectedBuilding, currentData.deliveryMemo]);
@@ -372,7 +377,7 @@ function App() {
           <div>🍱 도시락 : {currentData.lunch}개</div>
           <div>🥣 국 : {currentData.soup}개</div>
           <div>🌱 로하스밀 : {currentData.lohas}개</div>
-          <div>☑ 완료 : {checkedRoomCount}/{totalRoomCount}</div>
+          <div>☑ 완료 : {checkedMealCount}/{totalMealCount}</div>
         </div>
 
         <div
