@@ -111,10 +111,14 @@ function Admin() {
         return Number(room?.mealCount) === 2 ? 2 : 1;
     }
 
-    function getMealCountsFromRooms(rooms) {
+    function getActiveRooms(rooms) {
         return (rooms || [])
             .map(normalizeRoom)
-            .filter((room) => !isRoomPaused(room))
+            .filter((room) => !isRoomPaused(room));
+    }
+
+    function getMealCountsFromRooms(rooms) {
+        return getActiveRooms(rooms)
             .reduce(
                 (counts, room) => {
                     const mealCount = getRoomMealCount(room);
@@ -182,9 +186,8 @@ function Admin() {
 
     const issueRooms = dashboardSourceData.reduce(
         (acc, building) => {
-            acc[building.id] =
-                (building.rooms || [])
-                    .filter(room => room.issue && !isRoomPaused(room));
+            acc[building.id] = getActiveRooms(building.rooms)
+                .filter((room) => room.issue);
 
             return acc;
         },
@@ -380,9 +383,7 @@ function Admin() {
 
     const buildingStatus = visibleDashboardSourceData.map(
         (building) => {
-            const activeRooms = (building.rooms || []).filter(
-                (room) => !isRoomPaused(room)
-            );
+            const activeRooms = getActiveRooms(building.rooms);
             const liveBuilding = dashboardData.find(
                 (item) => item.id === building.id
             );
@@ -391,19 +392,27 @@ function Admin() {
             return {
                 id: building.id,
                 checked:
-                    activeRooms.filter(
-                        (room) => {
+                    activeRooms.reduce(
+                        (checkedCount, room) => {
                             const liveRoom = liveRooms.find(
                                 (item) => item.id === room.id
                             );
 
-                            return liveRoom
+                            const isChecked = liveRoom
                                 ? liveRoom.checked
                                 : room.checked;
-                        }
-                    ).length,
+                            return isChecked
+                                ? checkedCount + getRoomMealCount(room)
+                                : checkedCount;
+                        },
+                        0
+                    ),
                 total:
-                    activeRooms.length,
+                    activeRooms.reduce(
+                        (totalCount, room) =>
+                            totalCount + getRoomMealCount(room),
+                        0
+                    ),
 
                 issues:
                     activeRooms.filter(
@@ -443,8 +452,8 @@ function Admin() {
 
     const liveIssueList = visibleDashboardBuildings.flatMap(
         (building) =>
-            (building.rooms || [])
-                .filter((room) => room.issue && !isRoomPaused(room))
+            getActiveRooms(building.rooms)
+                .filter((room) => room.issue)
                 .map((room) => ({
                     buildingId: building.id,
                     ...room,
@@ -488,9 +497,8 @@ function Admin() {
             (building) => building.id === expandedIssues
         );
 
-        const hasIssues = expandedBuilding?.rooms?.some(
-            (room) => room.issue
-        );
+        const hasIssues = getActiveRooms(expandedBuilding?.rooms)
+            .some((room) => room.issue);
 
         if (!hasIssues) {
             setExpandedIssues(null);
@@ -1285,9 +1293,7 @@ function Admin() {
                                         issues: 0,
                                         hasDeliveryMemo: false,
                                     };
-                                const rooms = [...(building.rooms || [])]
-                                    .map(normalizeRoom)
-                                    .filter((room) => !isRoomPaused(room))
+                                const rooms = getActiveRooms(building.rooms)
                                     .sort(
                                         (a, b) =>
                                             parseInt(a.room) - parseInt(b.room)
@@ -1433,8 +1439,7 @@ function Admin() {
                                     issues: 0,
                                     hasDeliveryMemo: false,
                                 };
-                            const rooms = [...(building.rooms || [])]
-                                .map(normalizeRoom)
+                            const rooms = getActiveRooms(building.rooms)
                                 .sort(
                                     (a, b) =>
                                         parseInt(a.room) - parseInt(b.room)
@@ -2046,7 +2051,7 @@ function Admin() {
                         >
                             <h3>동별 공지</h3>
 
-                            {editData?.rooms?.some(room => room.issue) && (
+                            {getActiveRooms(editData?.rooms).some((room) => room.issue) && (
                                 <div
                                     style={{
                                         border: "2px solid red",
@@ -2058,8 +2063,8 @@ function Admin() {
                                 >
                                     <b>🚨 문제 발생 호수</b>
 
-                                    {editData.rooms
-                                        .filter(room => room.issue)
+                                    {getActiveRooms(editData?.rooms)
+                                        .filter((room) => room.issue)
                                         .map(room => (
                                             <div key={room.id}>
                                                 {room.room}
@@ -2090,7 +2095,7 @@ function Admin() {
                             <div>
                                 🌱 로하스밀 : {editData?.lohas || 0}
                             </div>
-                            <div>🏠 호수 수 : {editData?.rooms.length}</div>
+                            <div>🏠 호수 수 : {getActiveRooms(editData?.rooms).length}</div>
                             <div
                                 style={{
                                     marginTop: "15px",
@@ -2435,9 +2440,9 @@ function Admin() {
                         const hiddenMealCounts = getEffectiveMealCounts(
                             hiddenBuildingData || { rooms: [] }
                         );
-                        const hiddenRoomCount = (
-                            hiddenBuildingData?.rooms || []
-                        ).filter((room) => !isRoomPaused(room)).length;
+                        const hiddenRoomCount = getActiveRooms(
+                            hiddenBuildingData?.rooms
+                        ).length;
                         const isDetailOpen =
                             expandedHiddenBuilding === building;
 
